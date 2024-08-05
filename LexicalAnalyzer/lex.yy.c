@@ -392,9 +392,10 @@ using namespace std;
     (in the Flex-generated code), not in the current file. This tells the compiler
     that the definition will be found at link time.  */
 extern int yylex();
+extern FILE *yyin;
 // Global variable to keep track of line numbers
 int linenum = 1;
-#line 398 "lex.yy.c"
+#line 399 "lex.yy.c"
 
 /* Macros after this point can all be overridden by user definitions in
  * section 1.
@@ -545,12 +546,12 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
 
-#line 13 "BasicLexer.l"
+#line 14 "BasicLexer.l"
 
     // Rules Section
 
     /* Match newline characters and increment the line number */
-#line 554 "lex.yy.c"
+#line 555 "lex.yy.c"
 
 	if ( yy_init )
 		{
@@ -635,7 +636,7 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 17 "BasicLexer.l"
+#line 18 "BasicLexer.l"
 { 
     cout << "The Line Number is " << ++linenum << endl; 
 }
@@ -643,7 +644,7 @@ YY_RULE_SETUP
 /* Match tab characters and print a message */
 case 2:
 YY_RULE_SETUP
-#line 22 "BasicLexer.l"
+#line 23 "BasicLexer.l"
 { 
     cout << "Whitespace" << endl; 
 }
@@ -651,7 +652,7 @@ YY_RULE_SETUP
 /* Match floating-point numbers and print their value and length */
 case 3:
 YY_RULE_SETUP
-#line 27 "BasicLexer.l"
+#line 28 "BasicLexer.l"
 { 
     cout << "A Floating point has been detected with value: " << yytext << " With length: " << yyleng << endl; 
 }
@@ -659,7 +660,7 @@ YY_RULE_SETUP
 /* Match integers and print their value */
 case 4:
 YY_RULE_SETUP
-#line 32 "BasicLexer.l"
+#line 33 "BasicLexer.l"
 { 
     cout << "An Integer has been detected with value: " << yytext << endl; 
 }
@@ -671,7 +672,7 @@ YY_RULE_SETUP
     */
 case 5:
 YY_RULE_SETUP
-#line 41 "BasicLexer.l"
+#line 42 "BasicLexer.l"
 { 
     cout << "Echo pattern matched" << endl; 
 }
@@ -679,7 +680,7 @@ YY_RULE_SETUP
 /* Match the exact string "test" and print a message */
 case 6:
 YY_RULE_SETUP
-#line 46 "BasicLexer.l"
+#line 47 "BasicLexer.l"
 { 
     cout << "Test pattern matched" << endl; 
 }
@@ -687,7 +688,7 @@ YY_RULE_SETUP
 /* Match alphanumeric strings and print their value */
 case 7:
 YY_RULE_SETUP
-#line 51 "BasicLexer.l"
+#line 52 "BasicLexer.l"
 { 
     cout << "A string has been detected with value: " << yytext << endl; 
 }
@@ -695,17 +696,17 @@ YY_RULE_SETUP
 /* Match any other single character and print it as an unrecognized token */
 case 8:
 YY_RULE_SETUP
-#line 56 "BasicLexer.l"
+#line 57 "BasicLexer.l"
 { 
     cout << "Unrecognized token: " << yytext << endl; 
 }
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 59 "BasicLexer.l"
+#line 60 "BasicLexer.l"
 ECHO;
 	YY_BREAK
-#line 709 "lex.yy.c"
+#line 710 "lex.yy.c"
 case YY_STATE_EOF(INITIAL):
 	yyterminate();
 
@@ -1591,13 +1592,21 @@ int main()
 	return 0;
 	}
 #endif
-#line 59 "BasicLexer.l"
+#line 60 "BasicLexer.l"
 
 
 // User Code Section
 
 int main(int, char **)
 {
+    const char *filename = "inputFile.sl";
+    FILE *input = fopen(filename,"r");
+    if(!input){
+        cout<<"File is invalid"<<endl;
+        return -1;
+    }
+    yyin = input;
+
     // Call yylex in a loop to process the input
     while (yylex());
     return 0;

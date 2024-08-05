@@ -5,6 +5,7 @@ using namespace std;
     (in the Flex-generated code), not in the current file. This tells the compiler
     that the definition will be found at link time.  */
 extern int yylex();
+extern FILE *yyin;
 // Global variable to keep track of line numbers
 int linenum = 1;
 %}
@@ -62,6 +63,14 @@ test {
 
 int main(int, char **)
 {
+    const char *filename = "inputFile.sl";
+    FILE *input = fopen(filename,"r");
+    if(!input){
+        cout<<"File is invalid"<<endl;
+        return -1;
+    }
+    yyin = input;
+
     // Call yylex in a loop to process the input
     while (yylex());
     return 0;
