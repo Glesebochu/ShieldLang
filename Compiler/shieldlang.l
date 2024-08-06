@@ -23,6 +23,15 @@ extern int linenum=1; // Declare the external line number variable
     return NEWLINE;
 }
 
+    /*Define regular expressions for operators */
+[+\-*/] {
+    return OPERATOR;
+}
+    /*Match an Equal to sign*/
+= {
+    return EQ;
+}
+
 [ \t]+  { /* ignore whitespace */ }
 
     /* Match floating-point numbers and return a token */
@@ -56,6 +65,10 @@ test {
     // matched string value from the scanner (Flex) to the parser (Bison).
     yylval.sval = strdup(yytext);
     return STRING;
+}
+    /* Match identifiers */
+[a-zA-Z_][a-zA-Z0-9_]+ {
+    return IDENTIFIER;
 }
 
     /* Match any other single character and print it as an unrecognized token */
