@@ -1,5 +1,7 @@
 %{
 #include <iostream>
+#include "y.tab.h" //This will include the Bison generated eader file with all 
+                    //the token definitions
 using namespace std;
     /*  The extern keyword specifies that the yylex function is defined elsewhere 
     (in the Flex-generated code), not in the current file. This tells the compiler
@@ -16,22 +18,31 @@ int linenum = 1;
 
     /* Match newline characters and increment the line number */
 [\n] { 
-    cout << "The Line Number is " << ++linenum << endl; 
+    ++linenum; //This will increment the global newline variable
+    return NEWLINE;
+
 }
 
     /* Match tab characters and print a message */
 [\t] { 
-    cout << "Whitespace" << endl; 
+    return TAB;
 }
 
     /* Match floating-point numbers and print their value and length */
 [0-9]+\.[0-9]+ { 
-    cout << "A Floating point has been detected with value: " << yytext << " With length: " << yyleng << endl; 
+    //Convert the matched text to a floating point and assign it to 
+    //yylval.fval, which is a union used to pass values from the scanner to 
+    //the parser
+    yylval.fval=atof(yytex);
+    //Return the float token to the parser
+    return FLOAT;
 }
 
     /* Match integers and print their value */
 [1-9][0-9]* { 
-    cout << "An Integer has been detected with value: " << yytext << endl; 
+    //atoi (ASCII to integer) or atof (ASCII to float)
+    yylval.ival = atoi(yytext);//Converts to integer instead
+    return INTEGER;
 }
 
     /* Match the exact string "echo" and print a message */
@@ -40,17 +51,22 @@ int linenum = 1;
     the string pattern
     */
 (echo) { 
-    cout << "Echo pattern matched" << endl; 
+    return ECHO;
 }
 
     /* Match the exact string "test" and print a message */
 test { 
-    cout << "Test pattern matched" << endl; 
+    return TEST;
 }
 
     /* Match alphanumeric strings and print their value */
 [a-zA-Z0-9]+ { 
-    cout << "A string has been detected with value: " << yytext << endl; 
+    //strdup(yytext) duplicates the string pointed to by yytext and 
+    //returns a pointer to the new copy.
+    //By assigning the duplicated string to yylval.sval, we pass the 
+    //matched string value from the scanner (Flex) to the parser (Bison).
+    yylval.sval = strdup(yytext);
+    return STRING;
 }
 
     /* Match any other single character and print it as an unrecognized token */
@@ -59,19 +75,3 @@ test {
 }
 %%
 
-// User Code Section
-
-int main(int, char **)
-{
-    const char *filename = "inputFile.sl";
-    FILE *input = fopen(filename,"r");
-    if(!input){
-        cout<<"File is invalid"<<endl;
-        return -1;
-    }
-    yyin = input;
-
-    // Call yylex in a loop to process the input
-    while (yylex());
-    return 0;
-}
