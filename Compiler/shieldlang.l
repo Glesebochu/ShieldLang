@@ -9,7 +9,7 @@ using namespace std;
 that the definition will be found at link time. */
 extern int yylex();
 extern FILE *yyin; // Declare the external file input pointer
-extern int linenum; // Declare the external line number variable
+extern int linenum=1; // Declare the external line number variable
 %}
 
 %option noyywrap
