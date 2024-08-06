@@ -25,6 +25,7 @@ extern FILE *yyin;           // Variable to point to the input file
 %token <sval> STRING 
 %token TEST
 %token NEWLINE 
+%token UNKNOWN
 
 /* Rules Section */
 %%
@@ -58,6 +59,9 @@ expression:
     | STRING { 
           cout << "String detected: " << $1 << endl; 
       }
+    |UNKNOWN{
+        cout<<"Unknown Character detected"<<endl;
+    }
     ;
 
 %%

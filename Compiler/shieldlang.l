@@ -60,7 +60,7 @@ test {
 
     /* Match any other single character and print it as an unrecognized token */
 . { 
-    cout << "Unrecognized token: " << yytext << endl; 
+    return UNKNOWN; 
 }
 %%
 
