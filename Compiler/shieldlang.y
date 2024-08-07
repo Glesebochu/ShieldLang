@@ -62,13 +62,13 @@ extern FILE *yyin;           // Variable to point to the input file
 %%
 /* The input rule matches the entire input. It consists of zero or more lines. */
 input:
-      | input line     // Input can be empty or can contain multiple lines
-      ;
+      /* empty */
+    | input line     // Input can be empty or can contain multiple lines
+    ;
 
 /* The line rule matches a single line. */
 line:
-      NEWLINE              // A line can be just a newline character
-    | statement NEWLINE   // Or a line can be a statement followed by a newline
+    statement    // A line contains a statement
       {
           cout << "Statement evaluated successfully." << endl;
       }
@@ -78,7 +78,7 @@ line:
 statement:
       expression SEMICOLON {
         cout << "You have just tried an operation" << endl;
-        }
+      }
     | INTEGER { 
           cout << "Integer value: " << $1 << endl; 
       }
@@ -100,7 +100,7 @@ statement:
 expression:
       IDENTIFIER ASSIGN num operator num
     | IDENTIFIER ASSIGN num
-    | stmt SEMICOLON
+    | stmt
     ;
 
 /* Define what a number can be */
@@ -151,8 +151,8 @@ definition:
 
 /* Define what a body should look like */
 body:
-      statement NEWLINE
-    | NEWLINE
+      statement body
+    | /* empty */
     ;
 
 /* Define what an operand can be */

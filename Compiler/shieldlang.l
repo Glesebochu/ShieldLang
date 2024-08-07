@@ -50,7 +50,6 @@ extern int linenum=1; // Declare the external line number variable
     /* Match newline characters and increment the line number */
 [\n] { 
     ++linenum; // This will increment the global newline variable
-    return NEWLINE;
 }
 
 
