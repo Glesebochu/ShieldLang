@@ -6,3 +6,4 @@ tester
 _num1=5+4
 number123
 123
+_num2=9.3*5
