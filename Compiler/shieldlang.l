@@ -98,10 +98,6 @@ test {
 "//".*          { /* Ignore single-line comments */ }
 "/*"(.|\n)*?"*/" { /* Ignore multi-line comments */ }
 
-    /* Match any other single character and print it as an unrecognized token */
-. { 
-    return UNKNOWN; 
-}
 %%
 
 /* Main function is not needed here as it will be in the Bison file */
