@@ -63,22 +63,18 @@ extern FILE *yyin;           // Variable to point to the input file
 /* The input rule matches the entire input. It consists of zero or more lines. */
 input:
       /* empty */
-    | input line     // Input can be empty or can contain multiple lines
+    | input line   // Input can be empty or can contain multiple lines
     ;
 
 /* The line rule matches a single line. */
 line:
     statement    // A line contains a statement
-      {
-          cout << "Statement evaluated successfully." << endl;
-      }
+     
     ;
 
 /* Define the statement rule for different types of statements. */
 statement:
-      expression SEMICOLON {
-        cout << "You have just tried an operation" << endl;
-      }
+      expression SEMICOLON 
     | INTEGER { 
           cout << "Integer value: " << $1 << endl; 
       }
@@ -100,6 +96,9 @@ statement:
 expression:
       IDENTIFIER ASSIGN num operator num
     | IDENTIFIER ASSIGN num
+    | IDENTIFIER ASSIGN IDENTIFIER operator num
+    | IDENTIFIER ASSIGN num operator IDENTIFIER
+    | IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER
     | stmt
     ;
 
@@ -119,8 +118,12 @@ operator:
 
 /* Define what a statement should look like */
 stmt:
-      if_stmt
-    | loop_stmt
+      if_stmt{
+        cout << "If statement executed successfully" <<endl;
+      }
+    | loop_stmt{
+        cout << "Loop statement executed successfully" <<endl;
+      }
     ;
 
 /* Define what an if statement should look like */
@@ -200,6 +203,9 @@ int main(int argc, char **argv)
         yyin = stdin;
     }
     // Call yyparse to start parsing the input
-    yyparse();
+    int result = yyparse();
+    if(result == 0){
+        cout<<"File parsed successfully"<<endl;
+    }
     return 0;
 }
