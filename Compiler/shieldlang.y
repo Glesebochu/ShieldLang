@@ -26,9 +26,38 @@ extern FILE *yyin;           // Variable to point to the input file
 %token TEST
 %token NEWLINE 
 %token UNKNOWN
-%token OPERATOR
-%token EQ
 %token IDENTIFIER
+
+//keywords
+%token KEHONE
+%token KALHONE
+%token ESKEHONE
+%token DELTA
+%token MELS
+%token AQUM
+%token QETEL
+%token SIRA
+%token YEMIQEYER
+%token YEMAYQEYER
+%token EWNET
+%token HASET
+
+//Operators
+%token EQ
+%token ASSIGN
+%token PLUS
+%token MINUS
+%token MULTIPLY
+%token DIVIDE
+
+//Punctuation
+%token SEMICOLON
+%token COMMA
+%token LPAREN
+%token RPAREN
+%token LBRACE
+%token RBRACE
+
 
 /* Rules Section */
 %%
@@ -72,10 +101,29 @@ statement:
     ;
     /* Define what expressions should look like */
     expression:
-        IDENTIFIER EQ NUM OPERATOR NUM
+        IDENTIFIER ASSIGN NUM OPERATOR NUM
+        | STMT
         ;
     NUM:
         INTEGER|FLOAT
+    ;
+    OPERATOR:
+        PLUS
+        | MINUS
+        | MULTIPLY
+        | DIVIDE
+    ;
+    STMT:
+        KEHONE LPAREN OPERAND LOGICALOPERATOR OPERAND RPAREN
+    ;
+    OPERAND:
+        INTEGER
+        | FLOAT
+        | IDENTIFIER
+        | STRING
+    ;
+    LOGICALOPERATOR:
+        EQ
     ;
     
 
