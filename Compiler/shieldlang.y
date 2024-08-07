@@ -28,7 +28,7 @@ extern FILE *yyin;           // Variable to point to the input file
 %token UNKNOWN
 %token IDENTIFIER
 
-//keywords
+// Keywords
 %token KEHONE
 %token KALHONE
 %token ESKEHONE
@@ -42,7 +42,7 @@ extern FILE *yyin;           // Variable to point to the input file
 %token EWNET
 %token HASET
 
-//Operators
+// Operators
 %token EQ
 %token ASSIGN
 %token PLUS
@@ -50,7 +50,7 @@ extern FILE *yyin;           // Variable to point to the input file
 %token MULTIPLY
 %token DIVIDE
 
-//Punctuation
+// Punctuation
 %token SEMICOLON
 %token COMMA
 %token LPAREN
@@ -58,11 +58,8 @@ extern FILE *yyin;           // Variable to point to the input file
 %token LBRACE
 %token RBRACE
 
-
 /* Rules Section */
 %%
-/* Define the start rule and other grammar rules */
-
 /* The input rule matches the entire input. It consists of zero or more lines. */
 input:
       | input line     // Input can be empty or can contain multiple lines
@@ -71,19 +68,18 @@ input:
 /* The line rule matches a single line. */
 line:
       NEWLINE              // A line can be just a newline character
-    | statement NEWLINE   // Or a line can be an statement followed by a newline
+    | statement NEWLINE   // Or a line can be a statement followed by a newline
       {
-          cout << "statement evaluated successfully." << endl;
+          cout << "Statement evaluated successfully." << endl;
       }
     ;
 
 /* Define the statement rule for different types of statements. */
 statement:
-      expression {
-        cout << "You have just tried an operation"<<endl;
+      expression SEMICOLON {
+        cout << "You have just tried an operation" << endl;
         }
-    |
-      INTEGER { 
+    | INTEGER { 
           cout << "Integer value: " << $1 << endl; 
       }
     | FLOAT { 
@@ -95,39 +91,82 @@ statement:
     | STRING { 
           cout << "String detected: " << $1 << endl; 
       }
-    | UNKNOWN{
-        cout<<"Unknown Character detected"<<endl;
-    }
+    | UNKNOWN {
+        cout << "Unknown Character detected" << endl;
+      }
     ;
-    /* Define what expressions should look like */
-    expression:
-        IDENTIFIER ASSIGN NUM OPERATOR NUM
-        | STMT
-        ;
-    NUM:
-        INTEGER|FLOAT
-    ;
-    OPERATOR:
-        PLUS
-        | MINUS
-        | MULTIPLY
-        | DIVIDE
-    ;
-    STMT:
-        KEHONE LPAREN OPERAND LOGICALOPERATOR OPERAND RPAREN
-    ;
-    OPERAND:
-        INTEGER
-        | FLOAT
-        | IDENTIFIER
-        | STRING
-    ;
-    LOGICALOPERATOR:
-        EQ
-    ;
-    
 
+/* Define what expressions should look like */
+expression:
+      IDENTIFIER ASSIGN num operator num
+    | IDENTIFIER ASSIGN num
+    | stmt SEMICOLON
+    ;
 
+/* Define what a number can be */
+num:
+      INTEGER
+    | FLOAT
+    ;
+
+/* Define operators */
+operator:
+      PLUS
+    | MINUS
+    | MULTIPLY
+    | DIVIDE
+    ;
+
+/* Define what a statement should look like */
+stmt:
+      if_stmt
+    | loop_stmt
+    ;
+
+/* Define what an if statement should look like */
+if_stmt:
+      KEHONE LPAREN operand logical_operator operand RPAREN definition
+    ;
+
+/* Define what a loop should look like */
+loop_stmt:
+      while_loop
+    | for_loop
+    ;
+
+/* Define what a while loop should look like */
+while_loop:
+      ESKEHONE LPAREN operand logical_operator operand RPAREN definition
+    ;
+
+/* Define what a for loop should look like */
+for_loop:
+      DELTA LPAREN operand logical_operator operand RPAREN definition
+    ;
+
+/* Define what a definition should look like for a loop and an if statement */
+definition:
+      LBRACE body RBRACE
+    ;
+
+/* Define what a body should look like */
+body:
+      statement NEWLINE
+    | NEWLINE
+    ;
+
+/* Define what an operand can be */
+operand:
+      INTEGER
+    | FLOAT
+    | IDENTIFIER
+    | STRING
+    ;
+
+/* Define logical operators */
+logical_operator:
+      EQ
+    ;
 
 %%
 
