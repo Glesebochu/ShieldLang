@@ -17,6 +17,36 @@ extern int linenum=1; // Declare the external line number variable
 %%
     /* Rules Section */
 
+/* Keywords */
+"kehone"         { return KEHONE; }
+"kalhone"         { return KALHONE; }
+"eskehone"       { return ESKEHONE; }
+"delta"         { return DELTA; }
+"mels"        { return MELS; }
+"aqum"       { return AQUM; }
+"qetel"          { return QETEL; }
+"sira"         { return SIRA; }
+"yemiqeyer"         { return YEMIQEYER; }
+"yemayqeyer"        { return YEMAYQEYER; }
+"ewnet"          { return EWNET; }
+"haset"          { return HASET; }
+
+/* Operators */
+"=="            { return EQ; }
+"="             { return ASSIGN; }
+"+"             { return PLUS; }
+"-"             { return MINUS; }
+"*"             { return MULTIPLY; }
+"/"             { return DIVIDE; }
+
+/* Punctuation */
+";"             { return SEMICOLON; }
+","             { return COMMA; }
+"("             { return LPAREN; }
+")"             { return RPAREN; }
+"{"             { return LBRACE; }
+"}"             { return RBRACE; }
+
     /* Match newline characters and increment the line number */
 [\n] { 
     ++linenum; // This will increment the global newline variable
@@ -32,7 +62,7 @@ extern int linenum=1; // Declare the external line number variable
     return EQ;
 }
 
-[ \t]+  { /* ignore whitespace */ }
+[ \t\n]+  { /* ignore whitespace */ }
 
     /* Match floating-point numbers and return a token */
 [0-9]+\.[0-9]+ { 
@@ -70,6 +100,10 @@ test {
 [a-zA-Z_][a-zA-Z0-9_]+ {
     return IDENTIFIER;
 }
+
+/* Comments */
+"//".*          { /* Ignore single-line comments */ }
+"/*"(.|\n)*?"*/" { /* Ignore multi-line comments */ }
 
     /* Match any other single character and print it as an unrecognized token */
 . { 
