@@ -17,7 +17,7 @@ extern int linenum=1; // Declare the external line number variable
 %%
     /* Rules Section */
 
-/* Keywords */
+    /* Keywords */
 "kehone"         { return KEHONE; }
 "kalhone"         { return KALHONE; }
 "eskehone"       { return ESKEHONE; }
@@ -31,7 +31,7 @@ extern int linenum=1; // Declare the external line number variable
 "ewnet"          { return EWNET; }
 "haset"          { return HASET; }
 
-/* Operators */
+    /* Operators */
 "=="            { return EQ; }
 "="             { return ASSIGN; }
 "+"             { return PLUS; }
@@ -39,7 +39,7 @@ extern int linenum=1; // Declare the external line number variable
 "*"             { return MULTIPLY; }
 "/"             { return DIVIDE; }
 
-/* Punctuation */
+    /* Punctuation */
 ";"             { return SEMICOLON; }
 ","             { return COMMA; }
 "("             { return LPAREN; }
@@ -53,14 +53,7 @@ extern int linenum=1; // Declare the external line number variable
     return NEWLINE;
 }
 
-    /*Define regular expressions for operators */
-[+\-*/] {
-    return OPERATOR;
-}
-    /*Match an Equal to sign*/
-= {
-    return EQ;
-}
+
 
 [ \t\n]+  { /* ignore whitespace */ }
 
@@ -101,7 +94,7 @@ test {
     return IDENTIFIER;
 }
 
-/* Comments */
+    /* Comments */
 "//".*          { /* Ignore single-line comments */ }
 "/*"(.|\n)*?"*/" { /* Ignore multi-line comments */ }
 
