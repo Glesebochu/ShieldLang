@@ -78,20 +78,27 @@ extern int linenum=1; // Declare the external line number variable
 test { 
     return TEST;
 }
-
-    /* Match alphanumeric strings and return a token */
-[a-zA-Z0-9]+ { 
-    // strdup(yytext) duplicates the string pointed to by yytext and 
-    // returns a pointer to the new copy.
-    // By assigning the duplicated string to yylval.sval, we pass the 
-    // matched string value from the scanner (Flex) to the parser (Bison).
-    yylval.sval = strdup(yytext);
-    return STRING;
-}
     /* Match identifiers */
 [a-zA-Z_][a-zA-Z0-9_]+ {
     return IDENTIFIER;
 }
+
+    /* Match alphanumeric strings and return a token */
+\"[^\"]*\" { 
+    // strdup(yytext) duplicates the string pointed to by yytext and 
+    // returns a pointer to the new copy.
+    // By assigning the duplicated string to yylval.sval, we pass the 
+    // matched string value from the scanner (Flex) to the parser (Bison).
+  yytext[yyleng - 1] = '\0'; // Remove the end quote
+    yylval.sval = strdup(yytext + 1); // Duplicate string excluding the start quote
+    if (yylval.sval) {
+        return STRING;
+    } else {
+        cout<<"Memory allocation failed"<<endl;
+        return 0; // Return 0 to indicate error
+    }
+}
+
 
     /* Comments */
 "//".*          { /* Ignore single-line comments */ }
