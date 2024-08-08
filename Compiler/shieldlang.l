@@ -17,6 +17,13 @@ extern int linenum=1; // Declare the external line number variable
 %%
     /* Rules Section */
 
+    /* Data Types */
+"novem"         {return NOVEM;}
+"decem"         {return DECEM;}
+"duo"           {return DUO;}
+"unum"          {return UNUM;}
+"verbum"        {return VERBUM;}
+
     /* Keywords */
 "kehone"         { return KEHONE; }
 "kalhone"         { return KALHONE; }

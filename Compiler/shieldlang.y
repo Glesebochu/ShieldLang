@@ -24,7 +24,6 @@ extern FILE *yyin;           // Variable to point to the input file
 %token <fval> FLOAT 
 %token <sval> STRING 
 %token TEST
-%token NEWLINE 
 %token UNKNOWN
 %token IDENTIFIER
 
@@ -41,6 +40,13 @@ extern FILE *yyin;           // Variable to point to the input file
 %token YEMAYQEYER
 %token EWNET
 %token HASET
+// Data types
+
+%token NOVEM
+%token DECEM
+%token DUO
+%token UNUM
+%token VERBUM
 
 // Operators
 %token EQ
@@ -99,6 +105,8 @@ expression:
     | IDENTIFIER ASSIGN IDENTIFIER operator num
     | IDENTIFIER ASSIGN num operator IDENTIFIER
     | IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER
+    | IDENTIFIER ASSIGN IDENTIFIER
+    | IDENTIFIER ASSIGN STRING
     | stmt
     ;
 
@@ -124,8 +132,29 @@ stmt:
     | loop_stmt{
         cout << "Loop statement executed successfully" <<endl;
       }
+    | function{
+        cout << "Function evaluated" << endl;
+    }
+    ;
+//Define what a function should look like
+function:
+      SIRA IDENTIFIER LPAREN params RPAREN definition
     ;
 
+//Define what parameters should look like
+params:
+      data_type IDENTIFIER COMMA params
+      | data_type IDENTIFIER
+    ;
+
+//Define what a type is
+data_type:
+      NOVEM
+      | DECEM
+      | DUO
+      | UNUM
+      | VERBUM
+    ;
 /* Define what an if statement should look like */
 if_stmt:
       KEHONE LPAREN operand logical_operator operand RPAREN definition
