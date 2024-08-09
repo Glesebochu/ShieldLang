@@ -27,6 +27,7 @@ extern int linenum=1; // Declare the external line number variable
     /* Keywords */
 "kehone"         { return KEHONE; }
 "kalhone"         { return KALHONE; }
+"lelakehone"       { return LELAKEHONE; }
 "eskehone"       { return ESKEHONE; }
 "delta"         { return DELTA; }
 "mels"        { return MELS; }

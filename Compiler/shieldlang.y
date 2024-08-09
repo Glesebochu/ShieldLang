@@ -29,6 +29,7 @@ extern FILE *yyin;           // Variable to point to the input file
 
 // Keywords
 %token KEHONE
+%token LELAKEHONE
 %token KALHONE
 %token ESKEHONE
 %token DELTA
@@ -129,6 +130,14 @@ stmt:
       if_stmt{
         cout << "If statement executed successfully" <<endl;
       }
+    | if_stmt else_stmt{
+
+        cout <<"If else statement evaluated successfully"<<endl;
+      }
+    | if_stmt elif else_stmt{
+
+        cout <<"If else statement evaluated successfully"<<endl;
+      }
     | loop_stmt{
         cout << "Loop statement executed successfully" <<endl;
       }
@@ -159,6 +168,16 @@ data_type:
 if_stmt:
       KEHONE LPAREN operand logical_operator operand RPAREN definition
     ;
+else_stmt:
+      KALHONE definition
+    ;
+elif:
+      elif_stmt
+    | elif_stmt elif
+  ;
+  
+elif_stmt:
+      LELAKEHONE LPAREN operand logical_operator operand RPAREN definition
 
 /* Define what a loop should look like */
 loop_stmt:
