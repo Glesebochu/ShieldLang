@@ -50,13 +50,26 @@ extern FILE *yyin;           // Variable to point to the input file
 %token UNUM
 %token VERBUM
 
-// Operators
-%token EQ
+// Arithmetic Operators
 %token ASSIGN
 %token PLUS
 %token MINUS
 %token MULTIPLY
 %token DIVIDE
+
+// Comparison Operators
+%token EQ
+%token NE
+%token LT 
+%token GT 
+%token LE 
+%token GE 
+
+// Logical Operators
+%token AND 
+%token OR 
+%token NOT 
+
 
 // Punctuation
 %token SEMICOLON
@@ -65,6 +78,12 @@ extern FILE *yyin;           // Variable to point to the input file
 %token RPAREN
 %token LBRACE
 %token RBRACE
+
+/* Declare precedence and associativity */
+%right NOT
+%left OR
+%left AND
+%nonassoc EQ NE LT GT LE GE
 
 /* Rules Section */
 %%
@@ -149,6 +168,8 @@ stmt:
     | loop_stmt{
         cout << "Loop statement executed successfully" <<endl;
       }
+    | flow_control
+
     | function{
         cout << "Function evaluated" << endl;
     }
@@ -175,7 +196,7 @@ data_type:
     ;
 /* Define what an if statement should look like */
 if_stmt:
-      KEHONE LPAREN operand logical_operator operand RPAREN definition
+      KEHONE LPAREN conditions RPAREN definition
     ;
 else_stmt:
       KALHONE definition
@@ -186,7 +207,7 @@ elif:
   ;
 
 elif_stmt:
-      LELAKEHONE LPAREN operand logical_operator operand RPAREN definition
+      LELAKEHONE LPAREN conditions RPAREN definition
 
 /* Define what a loop should look like */
 loop_stmt:
@@ -196,14 +217,48 @@ loop_stmt:
 
 /* Define what a while loop should look like */
 while_loop:
-      ESKEHONE LPAREN operand logical_operator operand RPAREN definition
+      ESKEHONE LPAREN conditions RPAREN definition
     ;
 
 /* Define what a for loop should look like */
 for_loop:
-      DELTA LPAREN operand logical_operator operand RPAREN definition
+      DELTA LPAREN conditions RPAREN definition
+    ;
+flow_control:
+      AQUM SEMICOLON
+      | QETEL SEMICOLON
     ;
 
+/* Top-level condition rule */
+conditions:
+      or_condition
+    | LPAREN conditions RPAREN
+    ;
+
+/* Handle OR operations */
+or_condition:
+      and_condition
+    | or_condition OR and_condition
+    ;
+
+/* Handle AND operations */
+and_condition:
+      not_condition
+    | and_condition AND not_condition
+    ;
+
+/* Handle NOT operations */
+not_condition:
+      comparison
+    | NOT not_condition
+    ;
+
+/* Handle comparisons */
+comparison:
+      operand comparison_operators operand
+    | boolean
+    ;
+    ;
 /* Define what a definition should look like for a loop and an if statement */
 definition:
       LBRACE body RBRACE
@@ -241,11 +296,17 @@ operand:
     | FLOAT
     | IDENTIFIER
     | STRING
+    | boolean
     ;
 
-/* Define logical operators */
-logical_operator:
+/* Define comparison operators */
+comparison_operators:
       EQ
+      | NE
+      | LT 
+      | GT 
+      | LE 
+      | GE
     ;
 
 %%
