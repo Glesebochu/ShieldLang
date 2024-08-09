@@ -31,6 +31,7 @@ extern int linenum=1; // Declare the external line number variable
 "eskehone"       { return ESKEHONE; }
 "delta"         { return DELTA; }
 "mels"        { return MELS; }
+"minem"        { return MINEM; }
 "aqum"       { return AQUM; }
 "qetel"          { return QETEL; }
 "sira"         { return SIRA; }
@@ -62,7 +63,7 @@ extern int linenum=1; // Declare the external line number variable
 
 
 
-[ \t\n]+  { /* ignore whitespace */ }
+[ \t]+  { /* ignore whitespace */ }
 
     /* Match floating-point numbers and return a token */
 [0-9]+\.[0-9]+ { 
@@ -80,6 +81,7 @@ extern int linenum=1; // Declare the external line number variable
     yylval.ival = atoi(yytext); // Convert the matched text to an integer
     return INTEGER;
 }
+
 
 
     /* Match the exact string "test" */

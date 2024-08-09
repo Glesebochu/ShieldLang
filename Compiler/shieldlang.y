@@ -34,6 +34,7 @@ extern FILE *yyin;           // Variable to point to the input file
 %token ESKEHONE
 %token DELTA
 %token MELS
+%token MINEM
 %token AQUM
 %token QETEL
 %token SIRA
@@ -41,8 +42,8 @@ extern FILE *yyin;           // Variable to point to the input file
 %token YEMAYQEYER
 %token EWNET
 %token HASET
-// Data types
 
+// Data types
 %token NOVEM
 %token DECEM
 %token DUO
@@ -82,6 +83,7 @@ line:
 /* Define the statement rule for different types of statements. */
 statement:
       expression SEMICOLON 
+    | stmt 
     | INTEGER { 
           cout << "Integer value: " << $1 << endl; 
       }
@@ -108,7 +110,13 @@ expression:
     | IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER
     | IDENTIFIER ASSIGN IDENTIFIER
     | IDENTIFIER ASSIGN STRING
-    | stmt
+    | data_type IDENTIFIER ASSIGN num operator num
+    | data_type IDENTIFIER ASSIGN num
+    | data_type IDENTIFIER ASSIGN IDENTIFIER operator num
+    | data_type IDENTIFIER ASSIGN num operator IDENTIFIER
+    | data_type IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER
+    | data_type IDENTIFIER ASSIGN IDENTIFIER
+    | data_type IDENTIFIER ASSIGN STRING
     ;
 
 /* Define what a number can be */
@@ -136,7 +144,7 @@ stmt:
       }
     | if_stmt elif else_stmt{
 
-        cout <<"If else statement evaluated successfully"<<endl;
+        cout <<"If elif, else statement evaluated successfully"<<endl;
       }
     | loop_stmt{
         cout << "Loop statement executed successfully" <<endl;
@@ -147,7 +155,7 @@ stmt:
     ;
 //Define what a function should look like
 function:
-      SIRA IDENTIFIER LPAREN params RPAREN definition
+      SIRA data_type IDENTIFIER LPAREN params RPAREN function_definition
     ;
 
 //Define what parameters should look like
@@ -163,6 +171,7 @@ data_type:
       | DUO
       | UNUM
       | VERBUM
+      | MINEM
     ;
 /* Define what an if statement should look like */
 if_stmt:
@@ -175,7 +184,7 @@ elif:
       elif_stmt
     | elif_stmt elif
   ;
-  
+
 elif_stmt:
       LELAKEHONE LPAREN operand logical_operator operand RPAREN definition
 
@@ -199,8 +208,28 @@ for_loop:
 definition:
       LBRACE body RBRACE
     ;
+/* Define what a definition should look like for a function this is because functions can have
+   a return statement.
+ */
+function_definition:
+      LBRACE body RBRACE
+      | LBRACE body return_statement RBRACE
+    ;
+/* Define what a return statement looks like for a function*/
+return_statement:
+      MELS IDENTIFIER SEMICOLON
+      | MELS STRING SEMICOLON
+      | MELS FLOAT SEMICOLON
+      | MELS INTEGER SEMICOLON
+      | MELS boolean SEMICOLON
 
-/* Define what a body should look like */
+      ;
+
+boolean:
+      EWNET
+      | HASET
+    ;
+/* Define what a body should look like for if statements and loops */
 body:
       statement body
     | /* empty */
