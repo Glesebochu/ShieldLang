@@ -35,20 +35,31 @@ extern int linenum=1; // Declare the external line number variable
 "aqum"       { return AQUM; }
 "qetel"          { return QETEL; }
 "sira"         { return SIRA; }
-"yemiqeyer"         { return YEMIQEYER; }
 "yemayqeyer"        { return YEMAYQEYER; }
 "ewnet"          { return EWNET; }
 "haset"          { return HASET; }
 
-    /* Operators */
-"=="            { return EQ; }
+    /* Arithmetic Operators */
 "="             { return ASSIGN; }
 "+"             { return PLUS; }
 "-"             { return MINUS; }
 "*"             { return MULTIPLY; }
 "/"             { return DIVIDE; }
 
-    /* Punctuation */
+    /* Comparison Operators */
+"=="            { return EQ; }
+"!="            { return NE; }
+"<"             { return LT; }
+">"             { return GT; }
+"<="            { return LE; }
+">="            { return GE; }
+
+    /* Logical Operators */
+"&&"            { return AND; }
+"||"            { return OR; }
+"!"             { return NOT; }
+
+    /* special symbols */
 ";"             { return SEMICOLON; }
 ","             { return COMMA; }
 "("             { return LPAREN; }
