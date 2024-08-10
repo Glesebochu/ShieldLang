@@ -87,7 +87,7 @@ extern int linenum=1; // Declare the external line number variable
 }
 
     /* Match integers and return a token */
-[1-9][0-9]* { 
+[-]?([1-9][0-9]*|0) { 
     // atoi (ASCII to integer)
     yylval.ival = atoi(yytext); // Convert the matched text to an integer
     return INTEGER;
@@ -100,7 +100,8 @@ test {
     return TEST;
 }
     /* Match identifiers */
-[a-zA-Z_][a-zA-Z0-9_]+ {
+[a-zA-Z_][a-zA-Z0-9_]* {
+    yylval.sval=strdup(yytext);
     return IDENTIFIER;
 }
 
