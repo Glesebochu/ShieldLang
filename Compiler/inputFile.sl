@@ -52,6 +52,8 @@ sira verbum TestFunc(decem float1, verbum string1, duo False){
     
     mels FullName;
 }
+
+//Defining a while loop
 eskehone(_a==5){
     decem _a=9+1;
     kehone(LastName!=null){
@@ -64,6 +66,21 @@ eskehone(_a==5){
         LastName="Finhas";
     }
 }
+
+//Defining a function with a loop inside of it
+sira minem yemayqomsira(decem float20){
+    eskehone(ewnet){
+        kehone(!dekemegn&&2<=4){
+            qetel;
+        }
+        kalhone{
+            aqum;
+        }
+    }
+
+}
+
+//For loop declaration
 delta(novem i=20 , novem j=0; i<j&&i!=-1; i--,j++){
     //Do something
 }

@@ -80,9 +80,9 @@ extern FILE *yyin;           // Variable to point to the input file
 %token RBRACE
 
 /* Declare precedence and associativity */
-%right NOT
 %left OR
 %left AND
+%right NOT
 %nonassoc EQ NE LT GT LE GE
 
 /* Rules Section */
@@ -250,34 +250,41 @@ increment_decrement:
     ; 
 /* Top-level condition rule */
 conditions:
-      or_condition
-    | LPAREN conditions RPAREN
+      condition_expression
+    ;
+
+/* General condition expression */
+condition_expression:
+      or_expression
+      | LPAREN condition_expression RPAREN
     ;
 
 /* Handle OR operations */
-or_condition:
-      and_condition
-    | or_condition OR and_condition
+or_expression:
+      or_expression OR and_expression
+      | and_expression
     ;
 
 /* Handle AND operations */
-and_condition:
-      not_condition
-    | and_condition AND not_condition
+and_expression:
+      and_expression AND not_expression
+      | not_expression
     ;
 
 /* Handle NOT operations */
-not_condition:
-      comparison
-    | NOT not_condition
+not_expression:
+      NOT not_expression
+      | comparison
     ;
 
 /* Handle comparisons */
 comparison:
       operand comparison_operators operand
-    | boolean
+      | boolean
+      | IDENTIFIER
     ;
-    ;
+
+  
 /* Define what a definition should look like for a loop and an if statement */
 definition:
       LBRACE body RBRACE
