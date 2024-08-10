@@ -3,6 +3,7 @@ test
 123
 "tester"
 "a"
+_i
 "number123"
 _num1=5+4;
 _num2=9.3*5;
@@ -56,9 +57,15 @@ eskehone(_a==5){
     kehone(LastName!=null){
         qetel;
     }
-    kalhone{
+    lelakehone(!4==4&&5!=4){
         aqum;
     }
+    kalhone{
+        LastName="Finhas";
+    }
+}
+delta(novem i=20 , novem j=0; i<j&&i!=-1; i--,j++){
+    //Do something
 }
 
 //this is a comment will it work?

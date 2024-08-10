@@ -25,7 +25,7 @@ extern FILE *yyin;           // Variable to point to the input file
 %token <sval> STRING 
 %token TEST
 %token UNKNOWN
-%token IDENTIFIER
+%token <sval> IDENTIFIER
 
 // Keywords
 %token KEHONE
@@ -87,17 +87,13 @@ extern FILE *yyin;           // Variable to point to the input file
 
 /* Rules Section */
 %%
-/* The input rule matches the entire input. It consists of zero or more lines. */
+/* The input rule matches the entire input. It consists of zero or more statements. */
 input:
       /* empty */
-    | input line   // Input can be empty or can contain multiple lines
+    | input statement   // Input can be empty or can contain multiple statements
     ;
 
-/* The line rule matches a single line. */
-line:
-    statement    // A line contains a statement
-     
-    ;
+
 
 /* Define the statement rule for different types of statements. */
 statement:
@@ -115,8 +111,8 @@ statement:
     | STRING { 
           cout << "String detected: " << $1 << endl; 
       }
-    | UNKNOWN {
-        cout << "Unknown Character detected" << endl;
+    | IDENTIFIER {
+        cout << "Identifier detected: " << $1 << endl;
       }
     ;
 
@@ -176,7 +172,7 @@ stmt:
     ;
 //Define what a function should look like
 function:
-      SIRA data_type IDENTIFIER LPAREN params RPAREN function_definition
+      SIRA return_type IDENTIFIER LPAREN params RPAREN function_definition
     ;
 
 //Define what parameters should look like
@@ -185,14 +181,22 @@ params:
       | data_type IDENTIFIER
     ;
 
-//Define what a type is
-data_type:
+//Define what a return type is
+return_type:
       NOVEM
       | DECEM
       | DUO
       | UNUM
       | VERBUM
       | MINEM
+    ;
+//Define what a data type is
+data_type:
+      NOVEM
+      | DECEM
+      | DUO
+      | UNUM
+      | VERBUM
     ;
 /* Define what an if statement should look like */
 if_stmt:
@@ -222,13 +226,28 @@ while_loop:
 
 /* Define what a for loop should look like */
 for_loop:
-      DELTA LPAREN conditions RPAREN definition
+      DELTA LPAREN for_loop_declaration RPAREN definition
     ;
 flow_control:
       AQUM SEMICOLON
       | QETEL SEMICOLON
     ;
 
+for_loop_declaration:
+      for_loop_initialization SEMICOLON conditions SEMICOLON increment_decrement_list
+    ;
+for_loop_initialization:
+      data_type IDENTIFIER ASSIGN num
+      | data_type IDENTIFIER ASSIGN num COMMA for_loop_initialization
+    ;
+increment_decrement_list:
+      increment_decrement
+      | increment_decrement_list COMMA increment_decrement
+    ;
+increment_decrement:
+      IDENTIFIER PLUS PLUS
+      | IDENTIFIER MINUS MINUS
+    ; 
 /* Top-level condition rule */
 conditions:
       or_condition
