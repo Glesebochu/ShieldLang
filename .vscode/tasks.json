@@ -1,0 +1,65 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Run Bison",
+            "type": "shell",
+            "command": "bison",
+            "args": [
+                "-d",
+                "shieldlang.y"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Compiler"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Flex",
+            "type": "shell",
+            "command": "flex",
+            "args": [
+                "shieldlang.l"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Compiler"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build with g++",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "shieldlang.tab.c",
+                "lex.yy.c",
+                "ASTNode.cpp",
+                "ASTTraversal.cpp",
+                "SymbolTable.cpp",
+                "-o",
+                "shieldlang"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Compiler"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": ["Run Bison", "Run Flex"],
+            "problemMatcher": []
+        },
+        {
+            "label": "Run ShieldLang",
+            "type": "shell",
+            "command": "./shieldlang",
+            "args": [
+                "../inputFile.sl"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/Compiler"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
