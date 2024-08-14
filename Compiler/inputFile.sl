@@ -5,8 +5,11 @@ test
 "a"
 _i
 "number123"
-_num1=5+4;
-_num2=9.3*5;
+_num1=5;
+_num2=6;
+_num3=7;
+_num4=8;
+/* _num2=9.3*5;
 _num3=10/3.3;
 
 //Defining a simple if statement
@@ -84,6 +87,7 @@ sira minem yemayqomsira(decem float20){
 delta(novem i=20 , novem j=0; i<j&&i!=-1; i--,j++){
     //Do something
 }
+*/
 
 //this is a comment will it work?
 
