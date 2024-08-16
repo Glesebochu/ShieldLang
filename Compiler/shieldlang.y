@@ -135,11 +135,19 @@ statement:
     ;
 
 expression:
-      IDENTIFIER ASSIGN num operator num {
-          std::cout << "Assigning root with expression: " << $1 << " = " << $3 << " " << $4->value << " " << $5 << std::endl;
-          $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
-          root = $$;
-      }
+IDENTIFIER ASSIGN num operator num {
+    if ($4 != nullptr) {
+        std::string opValue = $4->value;
+        // std::cout << "Operator value: " << opValue << std::endl;  // Debugging output
+        ASTNodePtr operatorNode = createOperatorNode(opValue, $3, $5);
+        $$ = createAssignmentNode($1, operatorNode);
+        root = $$;
+    } else {
+        std::cerr << "Error: Operator node is null." << std::endl;
+    }
+}
+
+
     | IDENTIFIER ASSIGN num {
           ASTNodePtr newExpressionNode = createAssignmentNode($1, $3);
           if (root == nullptr) {
@@ -147,16 +155,16 @@ expression:
           } else {
               root = createSequenceNode(root, newExpressionNode);
           }
-          cout<<"The value of root is: "<<root->value<<endl;
-          cout<<"!!On the left or root is: "<<root->left->value<<endl;
-          cout<<"!!On the right or root is: "<<root->right->value<<endl;
-          if(root->left->left!=nullptr&&root->left->right!=nullptr){
-            cout<<"!!On the left left of root is: "<<root->left->left->value<<endl;
-            cout<<"!!On the left right of root is: "<<root->left->right->value<<endl;
-            cout<<"!!On the right left of root is: "<<root->right->left->value<<endl;
-            cout<<"!!On the right right of root is: "<<root->right->right->value<<endl;
+          // cout<<"The value of root is: "<<root->value<<endl;
+          // cout<<"!!On the left or root is: "<<root->left->value<<endl;
+          // cout<<"!!On the right or root is: "<<root->right->value<<endl;
+          // if(root->left->left!=nullptr&&root->left->right!=nullptr){
+          //   cout<<"!!On the left left of root is: "<<root->left->left->value<<endl;
+          //   cout<<"!!On the left right of root is: "<<root->left->right->value<<endl;
+          //   cout<<"!!On the right left of root is: "<<root->right->left->value<<endl;
+          //   cout<<"!!On the right right of root is: "<<root->right->right->value<<endl;
 
-          }
+          // }
 
 
       }
@@ -215,21 +223,27 @@ expression:
 num:
       INTEGER {
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
-          cout<<"The Integer is "<<$$->value<<endl;
       }
     | FLOAT {
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
       }
     ;
 
-
 /* Define operators */
 operator:
-      PLUS
-    | MINUS
-    | MULTIPLY
-    | DIVIDE
-    ;
+    PLUS {
+        $$ = new ASTNode(NODE_OPERATOR, "+");
+    }
+  | MINUS {
+        $$ = new ASTNode(NODE_OPERATOR, "-");
+    }
+  | MULTIPLY {
+        $$ = new ASTNode(NODE_OPERATOR, "*");
+    }
+  | DIVIDE {
+        $$ = new ASTNode(NODE_OPERATOR, "/");
+    }
+  ;
 
 /* Define what a statement should look like */
 stmt:
@@ -465,7 +479,7 @@ void printAST(ASTNode* node, int indent = 0) {
 /* Main function */
 int main(int argc, char **argv)
 {
-    yydebug = 1;  // Enable debugging
+    yydebug = 0;  // Enable debugging when it is 1
     // If a filename is provided as a command-line argument, open the file
     if (argc > 1)
     {
@@ -484,7 +498,6 @@ int main(int argc, char **argv)
         // If no file is provided, read from standard input (e.g., keyboard)
         yyin = stdin;
     }
-    ASTNode* root = nullptr;  // This should be the root of the AST
 
     // Call yyparse to start parsing the input
     int result = yyparse();
