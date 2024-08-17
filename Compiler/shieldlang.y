@@ -141,7 +141,12 @@ IDENTIFIER ASSIGN num operator num {
         // std::cout << "Operator value: " << opValue << std::endl;  // Debugging output
         ASTNodePtr operatorNode = createOperatorNode(opValue, $3, $5);
         $$ = createAssignmentNode($1, operatorNode);
-        root = $$;
+        if(root==nullptr){
+          root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
     } else {
         std::cerr << "Error: Operator node is null." << std::endl;
     }
@@ -170,51 +175,111 @@ IDENTIFIER ASSIGN num operator num {
       }
     | IDENTIFIER ASSIGN IDENTIFIER operator num {
           $$ = createAssignmentNode($1, createOperatorNode($4->value, new ASTNode(NODE_IDENTIFIER, $3), $5));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | IDENTIFIER ASSIGN num operator IDENTIFIER {
           $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, new ASTNode(NODE_IDENTIFIER, $5)));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER {
           $$ = createAssignmentNode($1, createOperatorNode($4->value, new ASTNode(NODE_IDENTIFIER, $3), new ASTNode(NODE_IDENTIFIER, $5)));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | IDENTIFIER ASSIGN IDENTIFIER {
           $$ = createAssignmentNode($1, new ASTNode(NODE_IDENTIFIER, $3));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | IDENTIFIER ASSIGN STRING {
           $$ = createAssignmentNode($1, new ASTNode(NODE_IDENTIFIER, $3));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN num operator num {
           $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN num {
           $$ = createAssignmentNode($2, $4);
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN IDENTIFIER operator num {
           $$ = createAssignmentNode($2, createOperatorNode($5->value, new ASTNode(NODE_IDENTIFIER, $4), $6));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN num operator IDENTIFIER {
           $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, new ASTNode(NODE_IDENTIFIER, $6)));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER {
           $$ = createAssignmentNode($2, createOperatorNode($5->value, new ASTNode(NODE_IDENTIFIER, $4), new ASTNode(NODE_IDENTIFIER, $6)));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN IDENTIFIER {
           $$ = createAssignmentNode($2, new ASTNode(NODE_IDENTIFIER, $4));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     | data_type IDENTIFIER ASSIGN STRING {
           $$ = createAssignmentNode($2, new ASTNode(NODE_IDENTIFIER, $4));
+            if(root==nullptr){
           root = $$;
+        }
+        else{
+          root=createSequenceNode(root,$$);
+        }
       }
     ;
 
@@ -504,7 +569,7 @@ int main(int argc, char **argv)
     if(result == 0 && root!=nullptr) {
         std::cout << "AST Root Node Type: " << root->type << std::endl;
         printAST(root);
-        generateTASM(root);
+        generateTASMFile(root,"TestProgramShieldlang");
         std::cout << "File parsed and TASM generated successfully." << std::endl;
     } else {
         std::cerr << "Parsing failed or root is null." << std::endl;
