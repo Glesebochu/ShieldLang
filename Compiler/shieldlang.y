@@ -39,7 +39,7 @@ ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second);
 %token <sval> IDENTIFIER
 %token TEST
 
-%type <node> expression operator num
+%type <node> expression operator operand
 
 // Keywords
 %token KEHONE
@@ -135,163 +135,41 @@ statement:
     ;
 
 expression:
-IDENTIFIER ASSIGN num operator num {
-    if ($4 != nullptr) {
-        std::string opValue = $4->value;
-        // std::cout << "Operator value: " << opValue << std::endl;  // Debugging output
-        ASTNodePtr operatorNode = createOperatorNode(opValue, $3, $5);
-        $$ = createAssignmentNode($1, operatorNode);
-        if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-    } else {
-        std::cerr << "Error: Operator node is null." << std::endl;
+    IDENTIFIER ASSIGN operand operator operand {
+        $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
     }
-}
-
-
-    | IDENTIFIER ASSIGN num {
-          ASTNodePtr newExpressionNode = createAssignmentNode($1, $3);
-          if (root == nullptr) {
-              root = newExpressionNode;
-          } else {
-              root = createSequenceNode(root, newExpressionNode);
-          }
-          // cout<<"The value of root is: "<<root->value<<endl;
-          // cout<<"!!On the left or root is: "<<root->left->value<<endl;
-          // cout<<"!!On the right or root is: "<<root->right->value<<endl;
-          // if(root->left->left!=nullptr&&root->left->right!=nullptr){
-          //   cout<<"!!On the left left of root is: "<<root->left->left->value<<endl;
-          //   cout<<"!!On the left right of root is: "<<root->left->right->value<<endl;
-          //   cout<<"!!On the right left of root is: "<<root->right->left->value<<endl;
-          //   cout<<"!!On the right right of root is: "<<root->right->right->value<<endl;
-
-          // }
-
-
-      }
-    | IDENTIFIER ASSIGN IDENTIFIER operator num {
-          $$ = createAssignmentNode($1, createOperatorNode($4->value, new ASTNode(NODE_IDENTIFIER, $3), $5));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | IDENTIFIER ASSIGN num operator IDENTIFIER {
-          $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, new ASTNode(NODE_IDENTIFIER, $5)));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER {
-          $$ = createAssignmentNode($1, createOperatorNode($4->value, new ASTNode(NODE_IDENTIFIER, $3), new ASTNode(NODE_IDENTIFIER, $5)));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | IDENTIFIER ASSIGN IDENTIFIER {
-          $$ = createAssignmentNode($1, new ASTNode(NODE_IDENTIFIER, $3));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | IDENTIFIER ASSIGN STRING {
-          $$ = createAssignmentNode($1, new ASTNode(NODE_IDENTIFIER, $3));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN num operator num {
-          $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN num {
-          $$ = createAssignmentNode($2, $4);
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN IDENTIFIER operator num {
-          $$ = createAssignmentNode($2, createOperatorNode($5->value, new ASTNode(NODE_IDENTIFIER, $4), $6));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN num operator IDENTIFIER {
-          $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, new ASTNode(NODE_IDENTIFIER, $6)));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN IDENTIFIER operator IDENTIFIER {
-          $$ = createAssignmentNode($2, createOperatorNode($5->value, new ASTNode(NODE_IDENTIFIER, $4), new ASTNode(NODE_IDENTIFIER, $6)));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN IDENTIFIER {
-          $$ = createAssignmentNode($2, new ASTNode(NODE_IDENTIFIER, $4));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
-    | data_type IDENTIFIER ASSIGN STRING {
-          $$ = createAssignmentNode($2, new ASTNode(NODE_IDENTIFIER, $4));
-            if(root==nullptr){
-          root = $$;
-        }
-        else{
-          root=createSequenceNode(root,$$);
-        }
-      }
+    | IDENTIFIER ASSIGN operand {
+        $$ = createAssignmentNode($1, $3);
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+    }
+    | data_type IDENTIFIER ASSIGN operand operator operand {
+        $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+    }
+    | data_type IDENTIFIER ASSIGN operand {
+        $$ = createAssignmentNode($2, $4);
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+    }
     ;
-
-
-
-num:
+operand:
       INTEGER {
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
       }
     | FLOAT {
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
       }
+    | IDENTIFIER {
+          $$ = new ASTNode(NODE_IDENTIFIER, $1);
+      }
+    | STRING {
+          $$ = new ASTNode(NODE_STRING, $1);  // Assuming strings are treated like identifiers
+      }
+    | boolean
+    ;
+num:
+      INTEGER
+      | FLOAT
     ;
 
 /* Define operators */
@@ -475,15 +353,6 @@ boolean:
 body:
       statement body
     | /* empty */
-    ;
-
-/* Define what an operand can be */
-operand:
-      INTEGER
-    | FLOAT
-    | IDENTIFIER
-    | STRING
-    | boolean
     ;
 
 /* Define comparison operators */
