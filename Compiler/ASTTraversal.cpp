@@ -41,15 +41,11 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         break;
 
     case NODE_IDENTIFIER:
-        // Assuming the identifier could be a string or variable
-        if (node->value[0] == '_' || isdigit(node->value[0]))
-        {
-            outfile << "MOV AX, [" << node->value << "]" << std::endl;
-        }
-        else
-        {
-            outfile << "MOV AX, \"" << node->value << "\"" << std::endl;
-        }
+        outfile << "MOV AX, [" << node->value << "]" << std::endl;
+        break;
+        
+    case NODE_STRING:
+        outfile << "MOV AX, \"" << node->value << "\"" << std::endl;
         break;
 
     case NODE_OPERATOR:
