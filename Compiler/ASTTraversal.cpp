@@ -2,6 +2,32 @@
 #include "SymbolTable.h"
 #include <iostream>
 #include <fstream>
+#include <set>
+
+void collectIdentifiers(ASTNode *node, std::set<std::string> &identifiers)
+{
+    if (!node)
+        return;
+
+    if (node->type == NODE_IDENTIFIER)
+    {
+        identifiers.insert(node->value);
+    }
+
+    collectIdentifiers(node->left, identifiers);
+    collectIdentifiers(node->right, identifiers);
+}
+
+void generateDeclarations(const std::set<std::string> &identifiers, std::ofstream &outfile)
+{
+    outfile << "DATA SEGMENT" << std::endl;
+    for (const auto &id : identifiers)
+    {
+        outfile << id << " DW ?" << std::endl; // Assuming each identifier is a word
+    }
+    outfile << "DATA ENDS" << std::endl
+            << std::endl;
+}
 
 void generateTASM(ASTNode *node, std::ofstream &outfile)
 {
@@ -15,7 +41,15 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         break;
 
     case NODE_IDENTIFIER:
-        outfile << "MOV AX, [" << node->value << "]" << std::endl;
+        // Assuming the identifier could be a string or variable
+        if (node->value[0] == '_' || isdigit(node->value[0]))
+        {
+            outfile << "MOV AX, [" << node->value << "]" << std::endl;
+        }
+        else
+        {
+            outfile << "MOV AX, \"" << node->value << "\"" << std::endl;
+        }
         break;
 
     case NODE_OPERATOR:
@@ -39,6 +73,8 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         {
             outfile << "DIV BX" << std::endl;
         }
+        outfile << "MOV DX, AX" << std::endl;
+        outfile << "CALL PrintNumber" << std::endl; // Assuming a PrintNumber function exists
         break;
 
     case NODE_ASSIGNMENT:
@@ -66,7 +102,14 @@ void generateTASMFile(ASTNode *root, const std::string &filename)
         return;
     }
 
+    std::set<std::string> identifiers;
+    collectIdentifiers(root, identifiers);
+
+    generateDeclarations(identifiers, outfile);
+
+    outfile << "CODE SEGMENT" << std::endl;
     generateTASM(root, outfile);
+    outfile << "CODE ENDS" << std::endl;
 
     outfile.close();
 }
