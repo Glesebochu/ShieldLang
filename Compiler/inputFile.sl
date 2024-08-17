@@ -1,4 +1,3 @@
-test
 17.45223
 123
 "tester"
@@ -10,7 +9,7 @@ _num2=6;
 _num3=7;
 _num4=8;
 num7=9*3;
- _num2=9.3*5;
+_num2=9.3*5;
 _num3=10/3.3;
 
 //Defining a simple if statement
@@ -21,7 +20,7 @@ kehone(_a==4){
 }
 
 //Defining an if elif else statement
-
+/*
 kehone(5==6){
     _num8=9;
     Test="Worked";
@@ -29,12 +28,10 @@ kehone(5==6){
 lelakehone(6==7){
     Test="Maybe";
 }
-lelakehone(7 == 6){
-    Test= "Definately Not";
-}
 kalhone { 
     Test = "Failed";
 }
+*/
 
 //Defining a function
 sira minem TestFunc(decem float1, verbum string1, duo False){
@@ -42,6 +39,7 @@ sira minem TestFunc(decem float1, verbum string1, duo False){
 }
 
 //Defining a function with a valid return statement
+/*
 sira verbum TestFunc(decem float1, verbum string1, duo False){
     verbum LastName="Gustav";
     kehone(LastName!=null){
@@ -56,6 +54,7 @@ sira verbum TestFunc(decem float1, verbum string1, duo False){
     
     mels FullName;
 }
+*/
 
 //Defining a while loop
 eskehone(_a==5){
