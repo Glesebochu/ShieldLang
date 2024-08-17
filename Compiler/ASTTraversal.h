@@ -3,6 +3,7 @@
 
 #include "ASTNode.h"
 
-void generateTASM(ASTNode *node);
+void generateTASM(ASTNode *node, std::ofstream &outfile);
+void generateTASMFile(ASTNode *node, const std::string &filename);
 
 #endif // ASTTRAVERSAL_H
