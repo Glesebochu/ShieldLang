@@ -139,7 +139,6 @@ void generateTASMFile(ASTNode *root, const std::string &filename)
 
     generateTASM(root, outfile);
 
-    // PrintNumber procedure
     outfile << "PrintNumber PROC" << std::endl;
     outfile << "    PUSH AX" << std::endl;
     outfile << "    PUSH BX" << std::endl;
@@ -149,17 +148,16 @@ void generateTASMFile(ASTNode *root, const std::string &filename)
     outfile << "    MOV CX, 10" << std::endl; // Base 10
     outfile << "    XOR BX, BX" << std::endl; // BX will hold the result string
 
-    outfile << "    CMP DX, 0" << std::endl;
+    outfile << "    CMP AX, 0" << std::endl;
     outfile << "    JZ PrintZero" << std::endl;
 
     outfile << "ConvertLoop:" << std::endl;
-    outfile << "    XOR AX, AX" << std::endl;
-    outfile << "    DIV CX" << std::endl;      // Divide DX by 10, quotient in AX, remainder in DX
+    outfile << "    XOR DX, DX" << std::endl;  // Clear DX before division
+    outfile << "    DIV CX" << std::endl;      // Divide AX by 10, quotient in AX, remainder in DX
     outfile << "    ADD DL, '0'" << std::endl; // Convert remainder to ASCII
     outfile << "    PUSH DX" << std::endl;     // Push remainder onto stack
     outfile << "    INC BX" << std::endl;      // Increment BX for string length
-    outfile << "    MOV DX, AX" << std::endl;  // Move quotient to DX
-    outfile << "    CMP DX, 0" << std::endl;
+    outfile << "    CMP AX, 0" << std::endl;   // Check if the quotient is zero
     outfile << "    JNZ ConvertLoop" << std::endl;
 
     outfile << "PrintLoop:" << std::endl;
