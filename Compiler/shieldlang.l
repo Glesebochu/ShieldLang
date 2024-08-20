@@ -126,7 +126,16 @@ test {
 
     /* Comments */
 "//".*          { /* Ignore single-line comments */ }
-"/*"([^*]|\*[^/])*"*/" { /* Ignore multi-line comments */ }
+"/*"([^*]|\*[^/])*"*/" {
+    // Increment line number for each newline character within the comment
+    for (int i = 0; yytext[i] != '\0'; i++) {
+        if (yytext[i] == '\n') {
+            linenum++;
+        }
+    }
+    /* Ignore multi-line comments */
+}
+
 
 
 %%

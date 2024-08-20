@@ -119,7 +119,14 @@ input:
 
 /* Define the statement rule for different types of statements. */
 statement:
-      expression SEMICOLON 
+    expression SEMICOLON 
+
+    // Error recovery for invalid statements
+    | error SEMICOLON {
+        std::cerr << "Error: Invalid statement at line " << linenum << ". Skipping to next statement." << std::endl;
+        yyerrok; // Recover from the error and continue parsing
+    }
+    
     | stmt 
     | INTEGER { 
           cout << "Integer value: " << $1 << endl; 
@@ -137,6 +144,8 @@ statement:
         cout << "Identifier detected: " << $1 << endl;
       }
     ;
+
+/* Expression rule with error recovery */
 expression:
     IDENTIFIER ASSIGN operand operator operand {
         if (isDeclared($1)) {
@@ -160,10 +169,10 @@ expression:
                 $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
-                std::cerr << "Error: Type mismatch in operation or assignment to " << $1 << std::endl;
+                std::cerr << "Error: Type mismatch in operation or assignment to " << $1 << " at line " << linenum << std::endl;
             }
         } else {
-            std::cerr << "Error: Variable " << $1 << " is not declared." << std::endl;
+            std::cerr << "Error: Variable " << $1 << " is not declared at line " << linenum << "." << std::endl;
         }
     }
     | IDENTIFIER ASSIGN operand {
@@ -181,10 +190,10 @@ expression:
                 $$ = createAssignmentNode($1, $3);
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
-                std::cerr << "Error: Type mismatch in assignment to " << $1 << std::endl;
+                std::cerr << "Error: Type mismatch in assignment to " << $1 << " at line " << linenum << std::endl;
             }
         } else {
-            std::cerr << "Error: Variable " << $1 << " is not declared." << std::endl;
+            std::cerr << "Error: Variable " << $1 << " is not declared at line " << linenum << "." << std::endl;
         }
     }
     | data_type IDENTIFIER ASSIGN operand operator operand {
@@ -209,10 +218,10 @@ expression:
                 $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
-                std::cerr << "Error: Type mismatch in operation or assignment to " << $2 << std::endl;
+                std::cerr << "Error: Type mismatch in operation or assignment to " << $2 << " at line " << linenum << std::endl;
             }
         } else {
-            std::cerr << "Error: Variable " << $2 << " already declared." << std::endl;
+            std::cerr << "Error: Variable " << $2 << " already declared at line " << linenum << "." << std::endl;
         }
     }
     | data_type IDENTIFIER ASSIGN operand {
@@ -230,14 +239,24 @@ expression:
                 $$ = createAssignmentNode($2, $4);
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
-                std::cerr << "Error: Type mismatch in assignment to " << $2 << std::endl;
+                std::cerr << "Error: Type mismatch in assignment to " << $2 << " at line " << linenum << std::endl;
             }
         } else {
-            std::cerr << "Error: Variable " << $2 << " already declared." << std::endl;
+            std::cerr << "Error: Variable " << $2 << " already declared at line " << linenum << "." << std::endl;
         }
+    }
+    // Error recovery for invalid right-hand side expressions
+    | IDENTIFIER ASSIGN error {
+        std::cerr << "Error: Invalid right-hand side in assignment at line " << linenum << ". Skipping to next statement." << std::endl;
+        yyerrok; // Recover from the error and continue parsing
+    }
+    | data_type IDENTIFIER ASSIGN error {
+        std::cerr << "Error: Invalid right-hand side in declaration assignment at line " << linenum << ". Skipping to next statement." << std::endl;
+        yyerrok; // Recover from the error and continue parsing
     }
     ;
 
+/* Operand rule */
 operand:
       INTEGER {
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
@@ -246,16 +265,17 @@ operand:
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
       }
     | IDENTIFIER {
-              $$ = new ASTNode(NODE_IDENTIFIER, $1);
+          $$ = new ASTNode(NODE_IDENTIFIER, $1);
       }
     | STRING {
           $$ = new ASTNode(NODE_STRING, $1);  // Assuming strings are treated like identifiers
       }
     ;
 
+/* Number rule */
 num:
       INTEGER
-      | FLOAT
+    | FLOAT
     ;
 
 /* Define operators */
@@ -276,37 +296,36 @@ operator:
 
 /* Define what a statement should look like */
 stmt:
-      if_stmt{
+      if_stmt {
         cout << "If statement executed successfully" <<endl;
       }
-    | if_stmt else_stmt{
+    | if_stmt else_stmt {
         cout <<"If else statement evaluated successfully"<<endl;
       }
-    | if_stmt elif else_stmt{
-
+    | if_stmt elif else_stmt {
         cout <<"If elif, else statement evaluated successfully"<<endl;
       }
-    | loop_stmt{
+    | loop_stmt {
         cout << "Loop statement executed successfully" <<endl;
       }
     | flow_control
-
-    | function{
+    | function {
         cout << "Function evaluated" << endl;
     }
     ;
-//Define what a function should look like
+
+/* Define what a function should look like */
 function:
       SIRA return_type IDENTIFIER LPAREN params RPAREN function_definition
     ;
 
-//Define what parameters should look like
+/* Define what parameters should look like */
 params:
       data_type IDENTIFIER COMMA params
       | data_type IDENTIFIER
     ;
 
-//Define what a return type is
+/* Define what a return type is */
 return_type:
       NOVEM
       | DECEM
@@ -315,7 +334,8 @@ return_type:
       | VERBUM
       | MINEM
     ;
-//Define what a data type is
+
+/* Define what a data type is */
 data_type:
       NOVEM   { $$ = TYPE_INTEGER; }
     | DECEM   { $$ = TYPE_FLOAT; }
@@ -328,16 +348,22 @@ data_type:
 if_stmt:
       KEHONE LPAREN conditions RPAREN definition
     ;
+
+/* Define what an else statement should look like */
 else_stmt:
       KALHONE definition
     ;
+
+/* Define what an elif should look like */
 elif:
       elif_stmt
     | elif_stmt elif
   ;
 
+/* Define what an elif statement should look like */
 elif_stmt:
       LELAKEHONE LPAREN conditions RPAREN definition
+    ;
 
 /* Define what a loop should look like */
 loop_stmt:
@@ -354,88 +380,98 @@ while_loop:
 for_loop:
       DELTA LPAREN for_loop_declaration RPAREN definition
     ;
+
+/* Define flow control */
 flow_control:
       AQUM SEMICOLON
-      | QETEL SEMICOLON
+    | QETEL SEMICOLON
     ;
 
+/* Define what a for loop declaration should look like */
 for_loop_declaration:
       for_loop_initialization SEMICOLON conditions SEMICOLON increment_decrement_list
     ;
+
+/* Define what a for loop initialization should look like */
 for_loop_initialization:
       data_type IDENTIFIER ASSIGN num
-      | data_type IDENTIFIER ASSIGN num COMMA for_loop_initialization
+    | data_type IDENTIFIER ASSIGN num COMMA for_loop_initialization
     ;
+
+/* Define what an increment/decrement list should look like */
 increment_decrement_list:
       increment_decrement
-      | increment_decrement_list COMMA increment_decrement
+    | increment_decrement_list COMMA increment_decrement
     ;
+
+/* Define what an increment/decrement should look like */
 increment_decrement:
       IDENTIFIER PLUS PLUS
-      | IDENTIFIER MINUS MINUS
+    | IDENTIFIER MINUS MINUS
     ; 
-/* Top-level condition rule */
+
+/* Define what a condition should look like */
 conditions:
       condition_expression
     ;
 
-/* General condition expression */
+/* Define what a condition expression should look like */
 condition_expression:
       or_expression
-      | LPAREN condition_expression RPAREN
+    | LPAREN condition_expression RPAREN
     ;
 
 /* Handle OR operations */
 or_expression:
       or_expression OR and_expression
-      | and_expression
+    | and_expression
     ;
 
 /* Handle AND operations */
 and_expression:
       and_expression AND not_expression
-      | not_expression
+    | not_expression
     ;
 
 /* Handle NOT operations */
 not_expression:
       NOT not_expression
-      | comparison
+    | comparison
     ;
 
 /* Handle comparisons */
 comparison:
       operand comparison_operators operand
-      | boolean
-      | IDENTIFIER
+    | boolean
+    | IDENTIFIER
     ;
 
-  
 /* Define what a definition should look like for a loop and an if statement */
 definition:
       LBRACE body RBRACE
     ;
-/* Define what a definition should look like for a function this is because functions can have
-   a return statement.
- */
+
+/* Define what a definition should look like for a function (because functions can have a return statement) */
 function_definition:
       LBRACE body RBRACE
-      | LBRACE body return_statement RBRACE
+    | LBRACE body return_statement RBRACE
     ;
-/* Define what a return statement looks like for a function*/
+
+/* Define what a return statement should look like for a function */
 return_statement:
       MELS IDENTIFIER SEMICOLON
-      | MELS STRING SEMICOLON
-      | MELS FLOAT SEMICOLON
-      | MELS INTEGER SEMICOLON
-      | MELS boolean SEMICOLON
+    | MELS STRING SEMICOLON
+    | MELS FLOAT SEMICOLON
+    | MELS INTEGER SEMICOLON
+    | MELS boolean SEMICOLON
+    ;
 
-      ;
-
+/* Define what a boolean should look like */
 boolean:
       EWNET
-      | HASET
+    | HASET
     ;
+
 /* Define what a body should look like for if statements and loops */
 body:
       statement body
@@ -445,11 +481,11 @@ body:
 /* Define comparison operators */
 comparison_operators:
       EQ
-      | NE
-      | LT 
-      | GT 
-      | LE 
-      | GE
+    | NE
+    | LT 
+    | GT 
+    | LE 
+    | GE
     ;
 
 %%
@@ -461,9 +497,9 @@ void yyerror(const char *s)
 {
     cerr << "Error: " << s << " at line " << linenum << endl;
 }
-/* User Code Section */
+
+/* Helper functions */
 ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right) {
-    /* std::cout << "Creating assignment node: " << identifier << " = " << right->value << std::endl; */
     ASTNodePtr assignNode = new ASTNode(NODE_ASSIGNMENT, "=");
     assignNode->left = new ASTNode(NODE_IDENTIFIER, identifier);
     assignNode->right = right;
@@ -471,19 +507,18 @@ ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right)
 }
 
 ASTNodePtr createOperatorNode(const std::string &op, ASTNodePtr left, ASTNodePtr right) {
-    /* std::cout << "Creating operator node: " << left->value << " " << op << " " << right->value << std::endl; */
     ASTNodePtr opNode = new ASTNode(NODE_OPERATOR, op);
     opNode->left = left;
     opNode->right = right;
     return opNode;
 }
+
 ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second) {
     ASTNodePtr sequenceNode = new ASTNode(NODE_SEQUENCE, ";");
     sequenceNode->left = first;
     sequenceNode->right = second;
     return sequenceNode;
 }
-
 
 void printAST(ASTNode* node, int indent = 0) {
     if (!node) return;
