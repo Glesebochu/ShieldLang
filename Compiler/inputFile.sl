@@ -4,8 +4,8 @@
 "a"
 _i
 verbum myName="SomeStupidName";
-"number123"
 novem _num1=5;
+"number123"
 decem _num2=9.3*5;
 decem _num3=20/3.3;
 novem _num4=8;
