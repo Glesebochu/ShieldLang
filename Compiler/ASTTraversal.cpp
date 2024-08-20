@@ -145,7 +145,7 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
             outfile << "LEA DX, new_line" << std::endl; // Print a new line after the number
             outfile << "CALL print_string" << std::endl;
         }
-        addToSymbolTable(node->left->value, 0);
+
         break;
 
     case NODE_SEQUENCE:
