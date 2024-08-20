@@ -3,6 +3,15 @@
 #include <iostream>
 #include <fstream>
 #include <set>
+#include <algorithm>
+
+// Utility function to remove spaces from string labels
+std::string removeSpaces(const std::string &str)
+{
+    std::string result = str;
+    result.erase(std::remove(result.begin(), result.end(), ' '), result.end());
+    return result;
+}
 
 void collectIdentifiersAndStrings(ASTNode *node, std::set<std::string> &identifiers, std::set<std::string> &strings)
 {
@@ -27,12 +36,15 @@ void generateDeclarations(const std::set<std::string> &identifiers, const std::s
     outfile << "DATA SEGMENT" << std::endl;
     for (const auto &id : identifiers)
     {
-        outfile << id << " DW ?" << std::endl; // Assuming each identifier is a word (16-bit)
+        outfile << id << " DW ?" << std::endl;                             // Declare the identifier
+        outfile << "msg_" << id << " DB '" << id << " is $'" << std::endl; // Define messages for each identifier
     }
     for (const auto &str : strings)
     {
-        outfile << str << " DB '" << str << "', 0" << std::endl; // Define strings as null-terminated
+        std::string sanitizedLabel = removeSpaces(str);
+        outfile << sanitizedLabel << " DB '" << str << " $' , 0" << std::endl; // Declare the string with spaces removed from the label
     }
+    outfile << "new_line DB 0Dh, 0Ah, '$'" << std::endl; // New line characters
     outfile << "DATA ENDS" << std::endl
             << std::endl;
 }
@@ -64,15 +76,28 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         break;
 
     case NODE_STRING:
-        // Load the address of the string literal
-        outfile << "LEA SI, " << node->value << std::endl;
-        break;
+    {
+        // Load the address of the string literal and print it
+        std::string sanitizedLabel = removeSpaces(node->value);
+        outfile << "LEA DX, " << sanitizedLabel << std::endl;
+        outfile << "CALL print_string" << std::endl;
+        outfile << "LEA DX, new_line" << std::endl; // Print a new line after each string
+        outfile << "CALL print_string" << std::endl;
+    }
+    break;
 
     case NODE_OPERATOR:
+        // Evaluate the left operand (this should be the dividend)
         generateTASM(node->left, outfile);
-        outfile << "PUSH AX" << std::endl;
+        outfile << "PUSH AX" << std::endl; // Save the dividend in AX
+
+        // Evaluate the right operand (this should be the divisor)
         generateTASM(node->right, outfile);
-        outfile << "POP BX" << std::endl;
+        outfile << "MOV BX, AX" << std::endl; // Move the divisor into BX
+
+        // Retrieve the dividend back into AX
+        outfile << "POP AX" << std::endl;
+
         if (node->value == "+")
         {
             outfile << "ADD AX, BX" << std::endl;
@@ -87,21 +112,38 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         }
         else if (node->value == "/")
         {
-            outfile << "DIV BX" << std::endl;
+            outfile << "XOR DX, DX" << std::endl; // Clear DX before division
+            outfile << "DIV BX" << std::endl;     // Divide AX by BX (dividend in AX, divisor in BX)
         }
-        outfile << "MOV DX, AX" << std::endl;
-        outfile << "CALL PrintNumber" << std::endl;
         break;
 
     case NODE_ASSIGNMENT:
-        generateTASM(node->right, outfile);
         if (node->right->type == NODE_STRING)
         {
+            std::string sanitizedLabel = removeSpaces(node->right->value);
+            outfile << "LEA SI, " << sanitizedLabel << std::endl;
             outfile << "MOV [" << node->left->value << "], SI" << std::endl; // Store string address
+
+            // Print the variable name, then the string value
+            outfile << "LEA DX, msg_" << node->left->value << std::endl;
+            outfile << "CALL print_string" << std::endl;
+            outfile << "LEA DX, " << sanitizedLabel << std::endl;
+            outfile << "CALL print_string" << std::endl;
+            outfile << "LEA DX, new_line" << std::endl; // Print a new line after the string
+            outfile << "CALL print_string" << std::endl;
         }
         else
         {
+            generateTASM(node->right, outfile);
             outfile << "MOV [" << node->left->value << "], AX" << std::endl; // Store the result in the variable
+
+            // Print the variable name and its value after the assignment
+            outfile << "LEA DX, msg_" << node->left->value << std::endl;
+            outfile << "CALL print_string" << std::endl;
+            outfile << "MOV AX, [" << node->left->value << "]" << std::endl;
+            outfile << "CALL PrintNumber" << std::endl;
+            outfile << "LEA DX, new_line" << std::endl; // Print a new line after the number
+            outfile << "CALL print_string" << std::endl;
         }
         addToSymbolTable(node->left->value, 0);
         break;
@@ -139,25 +181,29 @@ void generateTASMFile(ASTNode *root, const std::string &filename)
 
     generateTASM(root, outfile);
 
-    outfile << "PrintNumber PROC" << std::endl;
-    outfile << "    PUSH AX" << std::endl;
-    outfile << "    PUSH BX" << std::endl;
-    outfile << "    PUSH CX" << std::endl;
-    outfile << "    PUSH DX" << std::endl;
+    // PrintString procedure
+    outfile << "JMP ProgramEnd" << std::endl;
+    outfile << "print_string PROC" << std::endl;
+    outfile << "    MOV AH, 09h" << std::endl;
+    outfile << "    INT 21h" << std::endl;
+    outfile << "    RET" << std::endl;
+    outfile << "print_string ENDP" << std::endl;
 
-    outfile << "    MOV CX, 10" << std::endl; // Base 10
-    outfile << "    XOR BX, BX" << std::endl; // BX will hold the result string
+    // PrintNumber procedure
+    outfile << "PrintNumber PROC" << std::endl;
+    outfile << "    XOR BX, BX" << std::endl; // Clear BX to be used as a counter
+    outfile << "    MOV CX, 10" << std::endl; // Set up base 10 for division
 
     outfile << "    CMP AX, 0" << std::endl;
     outfile << "    JZ PrintZero" << std::endl;
 
     outfile << "ConvertLoop:" << std::endl;
     outfile << "    XOR DX, DX" << std::endl;  // Clear DX before division
-    outfile << "    DIV CX" << std::endl;      // Divide AX by 10, quotient in AX, remainder in DX
+    outfile << "    DIV CX" << std::endl;      // Divide AX by 10, remainder in DX, quotient in AX
     outfile << "    ADD DL, '0'" << std::endl; // Convert remainder to ASCII
-    outfile << "    PUSH DX" << std::endl;     // Push remainder onto stack
-    outfile << "    INC BX" << std::endl;      // Increment BX for string length
-    outfile << "    CMP AX, 0" << std::endl;   // Check if the quotient is zero
+    outfile << "    PUSH DX" << std::endl;     // Push the ASCII digit onto the stack
+    outfile << "    INC BX" << std::endl;      // Increment BX (which is used as a loop counter)
+    outfile << "    CMP AX, 0" << std::endl;
     outfile << "    JNZ ConvertLoop" << std::endl;
 
     outfile << "PrintLoop:" << std::endl;
@@ -166,22 +212,21 @@ void generateTASMFile(ASTNode *root, const std::string &filename)
     outfile << "    INT 21H" << std::endl; // Print character in DL
     outfile << "    DEC BX" << std::endl;
     outfile << "    JNZ PrintLoop" << std::endl;
+    outfile << "    LEA DX, new_line" << std::endl; // Print a new line
+    outfile << "    CALL print_string" << std::endl;
 
     outfile << "    JMP PrintDone" << std::endl;
 
     outfile << "PrintZero:" << std::endl;
     outfile << "    MOV DL, '0'" << std::endl;
     outfile << "    MOV AH, 2" << std::endl;
-    outfile << "    INT 21H" << std::endl; // Print '0'
+    outfile << "    INT 21H" << std::endl;
 
     outfile << "PrintDone:" << std::endl;
-    outfile << "    POP DX" << std::endl;
-    outfile << "    POP CX" << std::endl;
-    outfile << "    POP BX" << std::endl;
-    outfile << "    POP AX" << std::endl;
     outfile << "    RET" << std::endl;
     outfile << "PrintNumber ENDP" << std::endl;
 
+    outfile << "ProgramEnd:" << std::endl;
     outfile << "MOV AH, 4CH" << std::endl; // Terminate program
     outfile << "INT 21H" << std::endl;
 

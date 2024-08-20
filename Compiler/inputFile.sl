@@ -3,19 +3,20 @@
 "tester"
 "a"
 _i
+myName="SomeStupidName";
 "number123"
 _num1=5;
 _num2=6;
-_num3=7;
 _num4=8;
 num7=9*3;
 _num2=9.3*5;
-_num3=10/3.3;
+_num3=20/3.3;
+verbum AnotherName = "Did it actually work now???";
+testNumber = 300/5;
 
 //Defining a simple if statement
 kehone(_a==4){
-    _num5=6+3;
-     _num7=9;
+    _num5=60+410;
      FirstName="Finhas";
 }
 
