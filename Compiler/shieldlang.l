@@ -2,6 +2,7 @@
 #include <iostream>
 #include <cstdlib>
 #include "ASTNode.h"
+#include "SymbolTable.h"
 #include "shieldlang.tab.h" // This includes the Bison-generated header file with all the token definitions
 using namespace std;
 
