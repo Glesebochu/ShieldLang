@@ -12,6 +12,7 @@ enum NodeType
     NODE_IDENTIFIER,
     NODE_ASSIGNMENT,
     NODE_SEQUENCE, // New type for sequence of statements
+    NODE_UNKNOWN,
     // ... other types
 };
 
