@@ -22,6 +22,7 @@ ASTNodePtr root = nullptr;
 ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right);
 ASTNodePtr createOperatorNode(const std::string &op, ASTNodePtr left, ASTNodePtr right);
 ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second);
+NodeType convertDataTypeToNodeType(DataType dataType);
 %}
 
 // Define YYSTYPE to include different types
@@ -29,8 +30,10 @@ ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second);
     int ival;
     float fval;
     char *sval;
-    ASTNode* node;  // Use ASTNode* directly
+    ASTNode* node;
+    DataType type;  // Add type to the union to hold data types
 }
+
 
 /* Declare tokens to be used by Bison */
 %token <ival> INTEGER 
@@ -40,6 +43,7 @@ ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second);
 %token TEST
 
 %type <node> expression operator operand
+%type <type> data_type
 
 // Keywords
 %token KEHONE
@@ -136,22 +140,60 @@ statement:
 
 expression:
     IDENTIFIER ASSIGN operand operator operand {
-        $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
-        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+        if (isDeclared($1)) {
+            SymbolInfo symbol = getFromSymbolTable($1);
+            if (convertDataTypeToNodeType(symbol.type) == $3->type && $3->type == $5->type) {
+                $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
+                root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+            } else {
+                std::cerr << "Error: Type mismatch in operation or assignment to " << $1 << std::endl;
+            }
+        } else {
+            std::cerr << "Error: Variable " << $1 << " is not declared." << std::endl;
+        }
     }
     | IDENTIFIER ASSIGN operand {
-        $$ = createAssignmentNode($1, $3);
-        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+        if (isDeclared($1)) {
+            SymbolInfo symbol = getFromSymbolTable($1);
+            if (convertDataTypeToNodeType(symbol.type) == $3->type) {
+                $$ = createAssignmentNode($1, $3);
+                root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+            } else {
+                std::cerr << "Error: Type mismatch in assignment to " << $1 << std::endl;
+            }
+        } else {
+            std::cerr << "Error: Variable " << $1 << " is not declared." << std::endl;
+        }
     }
     | data_type IDENTIFIER ASSIGN operand operator operand {
-        $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
-        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+        if (!isDeclared($2)) {
+            addToSymbolTable($2, $1);  // Add identifier with its type
+            if (convertDataTypeToNodeType($1) == $4->type && $4->type == $6->type) {
+                $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
+                root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+            } else {
+                std::cerr << "Error: Type mismatch in operation or assignment to " << $2 << std::endl;
+            }
+        } else {
+            std::cerr << "Error: Variable " << $2 << " already declared." << std::endl;
+        }
     }
     | data_type IDENTIFIER ASSIGN operand {
-        $$ = createAssignmentNode($2, $4);
-        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+        if (!isDeclared($2)) {
+            addToSymbolTable($2, $1);  // Add identifier with its type
+            if (convertDataTypeToNodeType($1) == $4->type) {
+                $$ = createAssignmentNode($2, $4);
+                root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+            } else {
+                std::cerr << "Error: Type mismatch in assignment to " << $2 << std::endl;
+            }
+        } else {
+            std::cerr << "Error: Variable " << $2 << " already declared." << std::endl;
+        }
     }
     ;
+
+
 operand:
       INTEGER {
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
@@ -160,13 +202,15 @@ operand:
           $$ = new ASTNode(NODE_NUMBER, std::to_string($1));
       }
     | IDENTIFIER {
-          $$ = new ASTNode(NODE_IDENTIFIER, $1);
+              $$ = new ASTNode(NODE_IDENTIFIER, $1);
       }
     | STRING {
           $$ = new ASTNode(NODE_STRING, $1);  // Assuming strings are treated like identifiers
       }
-    | boolean
     ;
+
+
+
 num:
       INTEGER
       | FLOAT
@@ -231,12 +275,13 @@ return_type:
     ;
 //Define what a data type is
 data_type:
-      NOVEM
-      | DECEM
-      | DUO
-      | UNUM
-      | VERBUM
+      NOVEM   { $$ = TYPE_INTEGER; }
+    | DECEM   { $$ = TYPE_FLOAT; }
+    | DUO     { $$ = TYPE_BOOLEAN; }
+    | UNUM    { $$ = TYPE_BOOLEAN; }
+    | VERBUM  { $$ = TYPE_STRING; }
     ;
+
 /* Define what an if statement should look like */
 if_stmt:
       KEHONE LPAREN conditions RPAREN definition
@@ -376,7 +421,7 @@ void yyerror(const char *s)
 }
 /* User Code Section */
 ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right) {
-    std::cout << "Creating assignment node: " << identifier << " = " << right->value << std::endl;
+    /* std::cout << "Creating assignment node: " << identifier << " = " << right->value << std::endl; */
     ASTNodePtr assignNode = new ASTNode(NODE_ASSIGNMENT, "=");
     assignNode->left = new ASTNode(NODE_IDENTIFIER, identifier);
     assignNode->right = right;
@@ -384,7 +429,7 @@ ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right)
 }
 
 ASTNodePtr createOperatorNode(const std::string &op, ASTNodePtr left, ASTNodePtr right) {
-    std::cout << "Creating operator node: " << left->value << " " << op << " " << right->value << std::endl;
+    /* std::cout << "Creating operator node: " << left->value << " " << op << " " << right->value << std::endl; */
     ASTNodePtr opNode = new ASTNode(NODE_OPERATOR, op);
     opNode->left = left;
     opNode->right = right;
@@ -407,6 +452,17 @@ void printAST(ASTNode* node, int indent = 0) {
     printAST(node->left, indent + 1);
     printAST(node->right, indent + 1);
 }
+
+NodeType convertDataTypeToNodeType(DataType dataType) {
+    switch (dataType) {
+        case TYPE_INTEGER: return NODE_NUMBER;
+        case TYPE_FLOAT: return NODE_NUMBER;
+        case TYPE_STRING: return NODE_STRING;
+        // Add other conversions as needed
+        default: return NODE_UNKNOWN; // Define NODE_UNKNOWN if not already defined
+    }
+}
+
 
 
 
