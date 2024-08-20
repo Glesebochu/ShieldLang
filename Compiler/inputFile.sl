@@ -14,10 +14,13 @@ _num3=20/3.3;
 verbum AnotherName = "Did it actually work now???";
 testNumber = 300/5;
 
+/* Testing multiline comments
+will it stop*/
 //Defining a simple if statement
 kehone(_a==4){
     _num5=60+410;
      FirstName="Finhas";
+     
 }
 
 //Defining an if elif else statement
@@ -36,7 +39,7 @@ kalhone {
 
 //Defining a function
 sira minem TestFunc(decem float1, verbum string1, duo False){
-    verbum LastName="Gustav";
+    LastName="Gustav";
 }
 
 //Defining a function with a valid return statement

@@ -125,7 +125,8 @@ test {
 
     /* Comments */
 "//".*          { /* Ignore single-line comments */ }
-"/*"(.|\n)*?"*/" { /* Ignore multi-line comments */ }
+"/*"([^*]|\*[^/])*"*/" { /* Ignore multi-line comments */ }
+
 
 %%
 
