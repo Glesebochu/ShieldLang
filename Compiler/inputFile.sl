@@ -3,23 +3,23 @@
 "tester"
 "a"
 _i
-myName="SomeStupidName";
+verbum myName="SomeStupidName";
 "number123"
-_num1=5;
-_num2=6;
-_num4=8;
-num7=9*3;
-_num2=9.3*5;
-_num3=20/3.3;
+novem _num1=5;
+decem _num2=9.3*5;
+decem _num3=20/3.3;
+novem _num4=8;
+novem num7=9*3;
+decem num3PlusNum2 = _num3 + _num2;
 verbum AnotherName = "Did it actually work now???";
-testNumber = 300/5;
+novem testNumber = 300/5;
 
 /* Testing multiline comments
 will it stop*/
 //Defining a simple if statement
 kehone(_a==4){
-    _num5=60+410;
-     FirstName="Finhas";
+    novem _num5=60+410;
+     verbum FirstName="Finhas";
      
 }
 
@@ -39,9 +39,10 @@ kalhone {
 
 //Defining a function
 sira minem TestFunc(decem float1, verbum string1, duo False){
-    LastName="Gustav";
+    verbum LastName="Gustav";
 }
 
+verbum wrongType = _num3 * _num2;
 //Defining a function with a valid return statement
 /*
 sira verbum TestFunc(decem float1, verbum string1, duo False){
@@ -70,7 +71,7 @@ eskehone(_a==5){
         aqum;
     }
     kalhone{
-        LastName="Finhas";
+        
     }
 }
 

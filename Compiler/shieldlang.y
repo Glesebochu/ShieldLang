@@ -137,12 +137,26 @@ statement:
         cout << "Identifier detected: " << $1 << endl;
       }
     ;
-
 expression:
     IDENTIFIER ASSIGN operand operator operand {
         if (isDeclared($1)) {
-            SymbolInfo symbol = getFromSymbolTable($1);
-            if (convertDataTypeToNodeType(symbol.type) == $3->type && $3->type == $5->type) {
+            SymbolInfo assignee = getFromSymbolTable($1);
+            
+            NodeType leftNodeType;
+            if ($3->type == NODE_IDENTIFIER) {
+                leftNodeType = convertDataTypeToNodeType(getFromSymbolTable($3->value).type);
+            } else {
+                leftNodeType = $3->type;
+            }
+            
+            NodeType rightNodeType;
+            if ($5->type == NODE_IDENTIFIER) {
+                rightNodeType = convertDataTypeToNodeType(getFromSymbolTable($5->value).type);
+            } else {
+                rightNodeType = $5->type;
+            }
+
+            if (convertDataTypeToNodeType(assignee.type) == leftNodeType && leftNodeType == rightNodeType) {
                 $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
@@ -154,8 +168,16 @@ expression:
     }
     | IDENTIFIER ASSIGN operand {
         if (isDeclared($1)) {
-            SymbolInfo symbol = getFromSymbolTable($1);
-            if (convertDataTypeToNodeType(symbol.type) == $3->type) {
+            SymbolInfo assignee = getFromSymbolTable($1);
+            
+            NodeType operandNodeType;
+            if ($3->type == NODE_IDENTIFIER) {
+                operandNodeType = convertDataTypeToNodeType(getFromSymbolTable($3->value).type);
+            } else {
+                operandNodeType = $3->type;
+            }
+
+            if (convertDataTypeToNodeType(assignee.type) == operandNodeType) {
                 $$ = createAssignmentNode($1, $3);
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
@@ -168,7 +190,22 @@ expression:
     | data_type IDENTIFIER ASSIGN operand operator operand {
         if (!isDeclared($2)) {
             addToSymbolTable($2, $1);  // Add identifier with its type
-            if (convertDataTypeToNodeType($1) == $4->type && $4->type == $6->type) {
+            
+            NodeType leftNodeType;
+            if ($4->type == NODE_IDENTIFIER) {
+                leftNodeType = convertDataTypeToNodeType(getFromSymbolTable($4->value).type);
+            } else {
+                leftNodeType = $4->type;
+            }
+            
+            NodeType rightNodeType;
+            if ($6->type == NODE_IDENTIFIER) {
+                rightNodeType = convertDataTypeToNodeType(getFromSymbolTable($6->value).type);
+            } else {
+                rightNodeType = $6->type;
+            }
+
+            if (convertDataTypeToNodeType($1) == leftNodeType && leftNodeType == rightNodeType) {
                 $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
@@ -181,7 +218,15 @@ expression:
     | data_type IDENTIFIER ASSIGN operand {
         if (!isDeclared($2)) {
             addToSymbolTable($2, $1);  // Add identifier with its type
-            if (convertDataTypeToNodeType($1) == $4->type) {
+            
+            NodeType operandNodeType;
+            if ($4->type == NODE_IDENTIFIER) {
+                operandNodeType = convertDataTypeToNodeType(getFromSymbolTable($4->value).type);
+            } else {
+                operandNodeType = $4->type;
+            }
+
+            if (convertDataTypeToNodeType($1) == operandNodeType) {
                 $$ = createAssignmentNode($2, $4);
                 root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
             } else {
@@ -192,7 +237,6 @@ expression:
         }
     }
     ;
-
 
 operand:
       INTEGER {
@@ -208,8 +252,6 @@ operand:
           $$ = new ASTNode(NODE_STRING, $1);  // Assuming strings are treated like identifiers
       }
     ;
-
-
 
 num:
       INTEGER
@@ -455,16 +497,18 @@ void printAST(ASTNode* node, int indent = 0) {
 
 NodeType convertDataTypeToNodeType(DataType dataType) {
     switch (dataType) {
-        case TYPE_INTEGER: return NODE_NUMBER;
-        case TYPE_FLOAT: return NODE_NUMBER;
-        case TYPE_STRING: return NODE_STRING;
-        // Add other conversions as needed
-        default: return NODE_UNKNOWN; // Define NODE_UNKNOWN if not already defined
+        case TYPE_INTEGER:
+            return NODE_NUMBER;
+        case TYPE_FLOAT:
+            return NODE_NUMBER; // Assuming both integers and floats are treated as numbers in AST
+        case TYPE_STRING:
+            return NODE_STRING;
+        case TYPE_BOOLEAN:
+            return NODE_BOOLEAN;
+        default:
+            return NODE_UNKNOWN; // You can define NODE_UNKNOWN in your `ASTNode.h` or handle this case appropriately
     }
 }
-
-
-
 
 /* Main function */
 int main(int argc, char **argv)

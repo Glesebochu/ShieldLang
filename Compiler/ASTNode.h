@@ -5,10 +5,10 @@
 
 enum NodeType
 {
-    NODE_OPERATOR,
+    NODE_NUMBER,
     NODE_STRING,
     NODE_BOOLEAN,
-    NODE_NUMBER,
+    NODE_OPERATOR,
     NODE_IDENTIFIER,
     NODE_ASSIGNMENT,
     NODE_SEQUENCE, // New type for sequence of statements
