@@ -44,6 +44,10 @@ NodeType convertDataTypeToNodeType(DataType dataType);
 
 %type <node> expression operator operand
 %type <type> data_type
+%type <node> conditions definition body statement
+%type <node> stmt if_stmt else_stmt elif_stmt elif_chain condition_expression or_expression and_expression
+%type <node> not_expression comparison boolean
+%type <sval> comparison_operators
 
 // Keywords
 %token KEHONE
@@ -296,15 +300,25 @@ operator:
 
 /* Define what a statement should look like */
 stmt:
-      if_stmt {
-        cout << "If statement executed successfully" <<endl;
-      }
+    if_stmt {
+        $$ = $1;  // $1 is the entire if_stmt node
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+    }
+    | if_stmt elif_chain else_stmt {
+        ASTNode *ifNode = $1;  // $1 is the entire if_stmt node
+        ASTNode *elifNode = $2; // $2 is the elif_chain
+        ASTNode *elseNode = $3; // $3 is the else_stmt
+
+        $$ = createSequenceNode(ifNode, createSequenceNode(elifNode, elseNode));
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+    }
     | if_stmt else_stmt {
-        cout <<"If else statement evaluated successfully"<<endl;
-      }
-    | if_stmt elif else_stmt {
-        cout <<"If elif, else statement evaluated successfully"<<endl;
-      }
+        ASTNode *ifNode = $1;  // $1 is the entire if_stmt node
+        ASTNode *elseNode = $2; // $2 is the else_stmt
+
+        $$ = createSequenceNode(ifNode, elseNode);
+        root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+    }
     | loop_stmt {
         cout << "Loop statement executed successfully" <<endl;
       }
@@ -345,25 +359,37 @@ data_type:
     ;
 
 /* Define what an if statement should look like */
+
 if_stmt:
-      KEHONE LPAREN conditions RPAREN definition
+    KEHONE LPAREN conditions RPAREN definition {
+        $$ = new ASTNode(NODE_IF, "if");
+        $$->left = $3;  // $3 is the condition (conditions)
+        $$->right = $5; // $5 is the body (definition)
+    }
     ;
 
-/* Define what an else statement should look like */
-else_stmt:
-      KALHONE definition
-    ;
-
-/* Define what an elif should look like */
-elif:
-      elif_stmt
-    | elif_stmt elif
-  ;
-
-/* Define what an elif statement should look like */
 elif_stmt:
-      LELAKEHONE LPAREN conditions RPAREN definition
+    LELAKEHONE LPAREN conditions RPAREN definition {
+        $$ = new ASTNode(NODE_ELIF, "elif");
+        $$->left = $3;  // $3 is the condition (conditions)
+        $$->right = $5; // $5 is the body (definition)
+    }
     ;
+
+elif_chain:
+    elif_stmt {
+        $$ = $1;  // $1 is the entire elif_stmt node
+    }
+    | elif_stmt elif_chain {
+        $$ = createSequenceNode($1, $2);  // $1 is the current elif_stmt, $2 is the rest of the elif_chain
+    }
+    ;
+
+else_stmt:
+    KALHONE definition {
+        $$ = new ASTNode(NODE_ELSE, "else");
+        $$->left = $2; // $2 is the body (definition)
+    }
 
 /* Define what a loop should look like */
 loop_stmt:
@@ -411,45 +437,92 @@ increment_decrement:
     ; 
 
 /* Define what a condition should look like */
+/* Define what a condition should look like */
 conditions:
-      condition_expression
+      condition_expression {
+          $$ = $1;  // Pass the node up from the condition_expression
+      }
     ;
 
 /* Define what a condition expression should look like */
 condition_expression:
-      or_expression
-    | LPAREN condition_expression RPAREN
+      or_expression {
+          $$ = $1;  // Pass the node up from the or_expression
+      }
+    | LPAREN condition_expression RPAREN {
+          $$ = $2;  // Pass the inner expression up, ignoring the parentheses
+      }
     ;
 
 /* Handle OR operations */
 or_expression:
-      or_expression OR and_expression
-    | and_expression
+      or_expression OR and_expression {
+          $$ = new ASTNode(NODE_OPERATOR, "||");  // Create an OR node
+          $$->left = $1;  // Left operand
+          $$->right = $3; // Right operand
+      }
+    | and_expression {
+          $$ = $1;  // Pass the node up from the and_expression
+      }
     ;
 
 /* Handle AND operations */
 and_expression:
-      and_expression AND not_expression
-    | not_expression
+      and_expression AND not_expression {
+          $$ = new ASTNode(NODE_OPERATOR, "&&");  // Create an AND node
+          $$->left = $1;  // Left operand
+          $$->right = $3; // Right operand
+      }
+    | not_expression {
+          $$ = $1;  // Pass the node up from the not_expression
+      }
     ;
 
 /* Handle NOT operations */
 not_expression:
-      NOT not_expression
-    | comparison
+      NOT not_expression {
+          $$ = new ASTNode(NODE_OPERATOR, "!");  // Create a NOT node
+          $$->left = $2;  // The expression to negate
+          $$->right = nullptr;  // NOT has only one operand
+      }
+    | comparison {
+          $$ = $1;  // Pass the node up from the comparison
+      }
     ;
 
 /* Handle comparisons */
 comparison:
-      operand comparison_operators operand
-    | boolean
-    | IDENTIFIER
+      operand comparison_operators operand {
+          $$ = new ASTNode(NODE_OPERATOR, $2);  // Create a comparison node with the operator
+          $$->left = $1;  // Left operand
+          $$->right = $3; // Right operand
+      }
+    | boolean {
+         $$ = $1;  // Pass the boolean node up boolean node
+      }
+    | IDENTIFIER {
+          $$ = new ASTNode(NODE_IDENTIFIER, $1);  // Create an identifier node
+      }
     ;
 
-/* Define what a definition should look like for a loop and an if statement */
-definition:
-      LBRACE body RBRACE
+/* Define comparison operators */
+comparison_operators:
+      EQ  { $$ = "=="; }
+    | NE  { $$ = "!="; }
+    | LT  { $$ = "<"; }
+    | GT  { $$ = ">"; }
+    | LE  { $$ = "<="; }
+    | GE  { $$ = ">="; }
     ;
+
+
+/* Define what a definition should look like */
+definition:
+      LBRACE body RBRACE {
+          $$ = $2;  // Pass the body node up as the definition
+      }
+    ;
+
 
 /* Define what a definition should look like for a function (because functions can have a return statement) */
 function_definition:
@@ -468,26 +541,26 @@ return_statement:
 
 /* Define what a boolean should look like */
 boolean:
-      EWNET
-    | HASET
+      EWNET {
+          $$ = new ASTNode(NODE_BOOLEAN, "true");  // Create a boolean node for true
+      }
+    | HASET {
+          $$ = new ASTNode(NODE_BOOLEAN, "false"); // Create a boolean node for false
+      }
     ;
 
 /* Define what a body should look like for if statements and loops */
 body:
-      statement body
-    | /* empty */
+      statement body {
+          $$ = createSequenceNode($1, $2);  // Create a sequence of statements
+      }
+    | statement {
+          $$ = $1;  // Single statement case
+      }
+    | /* empty */ {
+          $$ = nullptr;  // Empty body case
+      }
     ;
-
-/* Define comparison operators */
-comparison_operators:
-      EQ
-    | NE
-    | LT 
-    | GT 
-    | LE 
-    | GE
-    ;
-
 %%
 
 /* User Code Section */
