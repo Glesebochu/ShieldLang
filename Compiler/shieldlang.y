@@ -590,6 +590,8 @@ ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second) {
     ASTNodePtr sequenceNode = new ASTNode(NODE_SEQUENCE, ";");
     sequenceNode->left = first;
     sequenceNode->right = second;
+    first->parent=sequenceNode;
+    second->parent=sequenceNode;
     return sequenceNode;
 }
 

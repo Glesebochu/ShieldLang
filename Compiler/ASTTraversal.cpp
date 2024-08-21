@@ -48,13 +48,12 @@ void generateDeclarations(const std::set<std::string> &identifiers, const std::s
     outfile << "DATA ENDS" << std::endl
             << std::endl;
 }
-
 void generateTASM(ASTNode *node, std::ofstream &outfile)
 {
     if (!node)
         return;
 
-    int intValue = 0; // Declare outside the switch statement
+    int intValue = 0;
 
     switch (node->type)
     {
@@ -62,112 +61,72 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
     {
         static int ifCount = 0;
         int currentIf = ifCount++;
+        std::string ifLabel = "IF_" + std::to_string(currentIf);
         std::string elseLabel = "ELSE_" + std::to_string(currentIf);
         std::string endIfLabel = "ENDIF_" + std::to_string(currentIf);
 
-        // Generate code for the condition
-        generateTASM(node->left, outfile);
-        outfile << "CMP AX, 0" << std::endl;
-        outfile << "JE " << elseLabel << std::endl;
+        // Generate code for the condition (comparison)
+        generateTASM(node->left, outfile); // This handles the condition expression
+
+        // Compare the result and jump to elseLabel if the condition is false
+        outfile << "CMP AX, BX" << std::endl;
+        outfile << "JNE " << elseLabel << std::endl;
 
         // Generate code for the if body
-        generateTASM(node->right->left, outfile);
-        outfile << "JMP " << endIfLabel << std::endl;
+        outfile << ifLabel << ":" << std::endl;
+        generateTASM(node->right, outfile); // Generate the code for the body under the IF
+
+        outfile << "JMP " << endIfLabel << std::endl; // Jump to endIfLabel after IF body
 
         // Generate code for the else body if it exists
         outfile << elseLabel << ":" << std::endl;
-        if (node->right->right)
+        if (node->parent->right)
         {
-            generateTASM(node->right->right, outfile);
+            generateTASM(node->parent->right, outfile); // Generate the code for the body under ELSE
+            node->parent->right = nullptr;
         }
+
         outfile << endIfLabel << ":" << std::endl;
         break;
     }
     case NODE_ELSE:
     {
-        // Handle else body generation
+        // modify this so that it checks if we have already generated
         generateTASM(node->left, outfile);
         break;
     }
-    case NODE_WHILE:
-    {
-        static int whileCount = 0;
-        int currentWhile = whileCount++;
-        std::string startWhileLabel = "WHILE_START_" + std::to_string(currentWhile);
-        std::string endWhileLabel = "WHILE_END_" + std::to_string(currentWhile);
-
-        outfile << startWhileLabel << ":" << std::endl;
-        generateTASM(node->left, outfile); // Generate condition
-        outfile << "CMP AX, 0" << std::endl;
-        outfile << "JE " << endWhileLabel << std::endl;
-
-        generateTASM(node->right, outfile); // Generate loop body
-        outfile << "JMP " << startWhileLabel << std::endl;
-        outfile << endWhileLabel << ":" << std::endl;
-        break;
-    }
-    case NODE_FOR:
-    {
-        static int forCount = 0;
-        int currentFor = forCount++;
-        std::string startForLabel = "FOR_START_" + std::to_string(currentFor);
-        std::string endForLabel = "FOR_END_" + std::to_string(currentFor);
-
-        // Assuming left->left is initialization, left->right is condition, and right is the increment
-        generateTASM(node->left->left, outfile); // Initialization
-        outfile << startForLabel << ":" << std::endl;
-
-        generateTASM(node->left->right, outfile); // Condition
-        outfile << "CMP AX, 0" << std::endl;
-        outfile << "JE " << endForLabel << std::endl;
-
-        generateTASM(node->right, outfile);              // Body
-        generateTASM(node->left->right->right, outfile); // Increment
-        outfile << "JMP " << startForLabel << std::endl;
-        outfile << endForLabel << ":" << std::endl;
-        break;
-    }
-    case NODE_NUMBER:
-        try
-        {
-            intValue = static_cast<int>(std::stof(node->value)); // Convert to integer
-        }
-        catch (const std::exception &e)
-        {
-            std::cerr << "Error converting number: " << node->value << std::endl;
-            return;
-        }
-        outfile << "MOV AX, " << intValue << std::endl;
-        break;
-
-    case NODE_IDENTIFIER:
-        outfile << "MOV AX, [" << node->value << "]" << std::endl;
-        break;
-
-    case NODE_STRING:
-    {
-        // Load the address of the string literal and print it
-        std::string sanitizedLabel = removeSpaces(node->value);
-        outfile << "LEA DX, " << sanitizedLabel << std::endl;
-        outfile << "CALL print_string" << std::endl;
-        outfile << "LEA DX, new_line" << std::endl; // Print a new line after each string
-        outfile << "CALL print_string" << std::endl;
-    }
-    break;
-
     case NODE_OPERATOR:
-        // Evaluate the left operand (this should be the dividend)
+    {
         generateTASM(node->left, outfile);
-        outfile << "PUSH AX" << std::endl; // Save the dividend in AX
+        outfile << "PUSH AX" << std::endl;
 
-        // Evaluate the right operand (this should be the divisor)
         generateTASM(node->right, outfile);
-        outfile << "MOV BX, AX" << std::endl; // Move the divisor into BX
+        outfile << "MOV BX, AX" << std::endl;
 
-        // Retrieve the dividend back into AX
         outfile << "POP AX" << std::endl;
 
-        if (node->value == "+")
+        // Generate comparison code
+        if (node->value == "==")
+        {
+            outfile << "CMP AX, BX" << std::endl;
+        }
+        else if (node->value == "!=")
+        {
+            outfile << "CMP AX, BX" << std::endl;
+            outfile << "JNE "; // To be handled in NODE_IF
+        }
+        else if (node->value == "<")
+        {
+            outfile << "CMP AX, BX" << std::endl;
+            outfile << "JL "; // To be handled in NODE_IF
+        }
+        else if (node->value == ">")
+        {
+            outfile << "CMP AX, BX" << std::endl;
+            outfile << "JG "; // To be handled in NODE_IF
+        }
+        //For Arithmetic operators
+        else if (node->value == "+")
         {
             outfile << "ADD AX, BX" << std::endl;
         }
@@ -185,42 +144,68 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
             outfile << "DIV BX" << std::endl;     // Divide AX by BX (dividend in AX, divisor in BX)
         }
         break;
-
+    }
     case NODE_ASSIGNMENT:
+    {
         if (node->right->type == NODE_STRING)
         {
             std::string sanitizedLabel = removeSpaces(node->right->value);
             outfile << "LEA SI, " << sanitizedLabel << std::endl;
-            outfile << "MOV [" << node->left->value << "], SI" << std::endl; // Store string address
+            outfile << "MOV [" << node->left->value << "], SI" << std::endl;
 
-            // Print the variable name, then the string value
             outfile << "LEA DX, msg_" << node->left->value << std::endl;
             outfile << "CALL print_string" << std::endl;
             outfile << "LEA DX, " << sanitizedLabel << std::endl;
             outfile << "CALL print_string" << std::endl;
-            outfile << "LEA DX, new_line" << std::endl; // Print a new line after the string
+            outfile << "LEA DX, new_line" << std::endl;
             outfile << "CALL print_string" << std::endl;
         }
         else
         {
             generateTASM(node->right, outfile);
-            outfile << "MOV [" << node->left->value << "], AX" << std::endl; // Store the result in the variable
+            outfile << "MOV [" << node->left->value << "], AX" << std::endl;
 
-            // Print the variable name and its value after the assignment
             outfile << "LEA DX, msg_" << node->left->value << std::endl;
             outfile << "CALL print_string" << std::endl;
             outfile << "MOV AX, [" << node->left->value << "]" << std::endl;
             outfile << "CALL PrintNumber" << std::endl;
-            outfile << "LEA DX, new_line" << std::endl; // Print a new line after the number
+            outfile << "LEA DX, new_line" << std::endl;
             outfile << "CALL print_string" << std::endl;
         }
-
         break;
-
+    }
     case NODE_SEQUENCE:
+    {
         generateTASM(node->left, outfile);
         generateTASM(node->right, outfile);
         break;
+    }
+    case NODE_NUMBER:
+        try
+        {
+            intValue = static_cast<int>(std::stof(node->value));
+        }
+        catch (const std::exception &e)
+        {
+            std::cerr << "Error converting number: " << node->value << std::endl;
+            return;
+        }
+        outfile << "MOV AX, " << intValue << std::endl;
+        break;
+
+    case NODE_IDENTIFIER:
+        outfile << "MOV AX, [" << node->value << "]" << std::endl;
+        break;
+
+    case NODE_STRING:
+    {
+        std::string sanitizedLabel = removeSpaces(node->value);
+        outfile << "LEA DX, " << sanitizedLabel << std::endl;
+        outfile << "CALL print_string" << std::endl;
+        outfile << "LEA DX, new_line" << std::endl;
+        outfile << "CALL print_string" << std::endl;
+    }
+    break;
 
     default:
         std::cerr << "Unknown AST node type" << std::endl;
