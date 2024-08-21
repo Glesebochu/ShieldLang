@@ -23,6 +23,8 @@ ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right)
 ASTNodePtr createOperatorNode(const std::string &op, ASTNodePtr left, ASTNodePtr right);
 ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second);
 NodeType convertDataTypeToNodeType(DataType dataType);
+void removeNodesFromSequence(ASTNode* node);
+void removeNodesInConditionals(ASTNode* node);
 %}
 
 // Define YYSTYPE to include different types
@@ -619,6 +621,74 @@ NodeType convertDataTypeToNodeType(DataType dataType) {
             return NODE_UNKNOWN; // You can define NODE_UNKNOWN in your `ASTNode.h` or handle this case appropriately
     }
 }
+void removeNodesInConditionals(ASTNode* node) {
+    if (!node) return;
+
+    std::cout << "Processing node: " << node->value << " (Type: " << node->type << ")" << std::endl;
+
+    // If the node is an IF, ELIF, or ELSE statement, we handle its body separately
+    if (node->type == NODE_IF || node->type == NODE_ELIF) {
+        std::cout << "Found IF/ELIF node: " << node->value << ". Processing its body..." << std::endl;
+        if (node->right) {
+            removeNodesFromSequence(node->right);
+        }
+    } else if (node->type == NODE_ELSE) {
+        std::cout << "Found ELSE node: " << node->value << ". Handling special case..." << std::endl;
+        if (node->parent->parent) {
+            ASTNode* leftSibling = node->parent->parent->left;
+            if (leftSibling && leftSibling->right) {
+                std::cout << "Removing left sibling's right child of ELSE node: " << leftSibling->right->left->value << std::endl;
+                removeNodesFromSequence(leftSibling->right);
+            }
+        }
+        // Remove the ELSE's own body as well
+        if (node->right) {
+            std::cout << "Removing ELSE node's body: " << node->right->value << std::endl;
+            removeNodesFromSequence(node->right);
+        }
+    } else {
+        std::cout << "Recursively checking children of node: " << node->value << std::endl;
+        // Recursively check left and right children
+        removeNodesInConditionals(node->left);
+        removeNodesInConditionals(node->right);
+    }
+}
+
+void removeNodesFromSequence(ASTNode* node) {
+    if (!node) return;
+
+    std::cout << "Removing node from sequence: " << node->value << " (Type: " << node->type << ")" << std::endl;
+
+    // Assuming that each node in the sequence has a parent pointer set
+    if (node->parent) {
+        if (node->parent->left == node) {
+            std::cout << "Removing node from parent's left: " << node->value << std::endl;
+            node->parent->left = nullptr;
+        } else if (node->parent->right == node) {
+            std::cout << "Removing node from parent's right: " << node->value << std::endl;
+            node->parent->right = nullptr;
+        }
+    }
+
+    // Continue to remove nodes from left and right branches
+    removeNodesFromSequence(node->left);
+    removeNodesFromSequence(node->right);
+
+    // If this node is part of a sequence, ensure to handle the sequence correctly
+    if (node->type == NODE_SEQUENCE) {
+        std::cout << "Handling sequence node: " << node->value << std::endl;
+        if (node->left) {
+            node->parent->left = node->left;
+            node->left->parent = node->parent;
+            std::cout << "Reassigned parent's left to: " << node->left->value << std::endl;
+        }
+        if (node->right) {
+            node->parent->right = node->right;
+            node->right->parent = node->parent;
+            std::cout << "Reassigned parent's right to: " << node->right->value << std::endl;
+        }
+    }
+}
 
 /* Main function */
 int main(int argc, char **argv)
@@ -646,6 +716,7 @@ int main(int argc, char **argv)
     // Call yyparse to start parsing the input
     int result = yyparse();
     if(result == 0 && root!=nullptr) {
+        removeNodesInConditionals(root);
         std::cout << "AST Root Node Type: " << root->type << std::endl;
         printAST(root);
         generateTASMFile(root,"TestProgramShieldlang");

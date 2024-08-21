@@ -18,7 +18,7 @@ novem testNumber = 300/5;
 will it stop*/
 //Defining a simple if statement
 novem _a=5;
-kehone(_a=4){
+kehone(_a==4){
     novem _num5=60+410;
      verbum FirstName="Finhas";
      
