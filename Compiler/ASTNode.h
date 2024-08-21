@@ -27,6 +27,7 @@ struct ASTNode
     std::string value;
     ASTNode *left;
     ASTNode *right;
+    ASTNode *parent;
 
     ASTNode(NodeType t, const std::string &val);
     ~ASTNode();

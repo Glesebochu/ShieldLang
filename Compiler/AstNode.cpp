@@ -1,7 +1,7 @@
 #include "ASTNode.h"
 
 ASTNode::ASTNode(NodeType t, const std::string &val)
-    : type(t), value(val), left(nullptr), right(nullptr) {}
+    : type(t), value(val), left(nullptr), right(nullptr) ,parent(nullptr) {}
 
 // Destructor implementation
 ASTNode::~ASTNode()
