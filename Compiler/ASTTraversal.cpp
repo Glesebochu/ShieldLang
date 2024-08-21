@@ -58,6 +58,75 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
 
     switch (node->type)
     {
+    case NODE_IF:
+    {
+        static int ifCount = 0;
+        int currentIf = ifCount++;
+        std::string elseLabel = "ELSE_" + std::to_string(currentIf);
+        std::string endIfLabel = "ENDIF_" + std::to_string(currentIf);
+
+        // Generate code for the condition
+        generateTASM(node->left, outfile);
+        outfile << "CMP AX, 0" << std::endl;
+        outfile << "JE " << elseLabel << std::endl;
+
+        // Generate code for the if body
+        generateTASM(node->right->left, outfile);
+        outfile << "JMP " << endIfLabel << std::endl;
+
+        // Generate code for the else body if it exists
+        outfile << elseLabel << ":" << std::endl;
+        if (node->right->right)
+        {
+            generateTASM(node->right->right, outfile);
+        }
+        outfile << endIfLabel << ":" << std::endl;
+        break;
+    }
+    case NODE_ELSE:
+    {
+        // Handle else body generation
+        generateTASM(node->left, outfile);
+        break;
+    }
+    case NODE_WHILE:
+    {
+        static int whileCount = 0;
+        int currentWhile = whileCount++;
+        std::string startWhileLabel = "WHILE_START_" + std::to_string(currentWhile);
+        std::string endWhileLabel = "WHILE_END_" + std::to_string(currentWhile);
+
+        outfile << startWhileLabel << ":" << std::endl;
+        generateTASM(node->left, outfile); // Generate condition
+        outfile << "CMP AX, 0" << std::endl;
+        outfile << "JE " << endWhileLabel << std::endl;
+
+        generateTASM(node->right, outfile); // Generate loop body
+        outfile << "JMP " << startWhileLabel << std::endl;
+        outfile << endWhileLabel << ":" << std::endl;
+        break;
+    }
+    case NODE_FOR:
+    {
+        static int forCount = 0;
+        int currentFor = forCount++;
+        std::string startForLabel = "FOR_START_" + std::to_string(currentFor);
+        std::string endForLabel = "FOR_END_" + std::to_string(currentFor);
+
+        // Assuming left->left is initialization, left->right is condition, and right is the increment
+        generateTASM(node->left->left, outfile); // Initialization
+        outfile << startForLabel << ":" << std::endl;
+
+        generateTASM(node->left->right, outfile); // Condition
+        outfile << "CMP AX, 0" << std::endl;
+        outfile << "JE " << endForLabel << std::endl;
+
+        generateTASM(node->right, outfile);              // Body
+        generateTASM(node->left->right->right, outfile); // Increment
+        outfile << "JMP " << startForLabel << std::endl;
+        outfile << endForLabel << ":" << std::endl;
+        break;
+    }
     case NODE_NUMBER:
         try
         {
