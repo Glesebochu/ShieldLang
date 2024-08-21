@@ -11,7 +11,12 @@ enum NodeType
     NODE_OPERATOR,
     NODE_IDENTIFIER,
     NODE_ASSIGNMENT,
-    NODE_SEQUENCE, // New type for sequence of statements
+    NODE_SEQUENCE,
+    NODE_IF,    // New node type for if statements
+    NODE_ELSE,  // New node type for else statements
+    NODE_ELIF,  // New node type for elif statements
+    NODE_WHILE, // New node type for while loops
+    NODE_FOR,   // New node type for for loops
     NODE_UNKNOWN,
     // ... other types
 };
