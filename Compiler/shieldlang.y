@@ -32,7 +32,7 @@ void removeUnnecessarySequenceNodes(ASTNode* &node);
 %union {
     int ival;
     float fval;
-    char *sval;
+    const char *sval;
     ASTNode* node;
     DataType type;  // Add type to the union to hold data types
 }
@@ -392,7 +392,7 @@ stmt:
     | loop_stmt {
         cout << "Loop statement executed successfully at line: " <<linenum<<endl;
       }
-    | flow_control
+    /* | flow_control */
     | function {
         cout << "Function evaluated at line: " <<linenum<< endl;
     }
@@ -478,10 +478,10 @@ for_loop:
     ;
 
 /* Define flow control */
-flow_control:
+/* flow_control:
       AQUM SEMICOLON
     | QETEL SEMICOLON
-    ;
+    ; */
 
 /* Define what a for loop declaration should look like */
 for_loop_declaration:
@@ -726,50 +726,54 @@ void removeAssignmentsOutsideConditionals(ASTNode* &node, bool insideConditional
         removeAssignmentsOutsideConditionals(node->right, insideConditional);
     }
 
-    // Delete the current node if it's an assignment node and we're outside of a conditional block
-    if (!insideConditional && node->type == NODE_ASSIGNMENT &&
+    // Set the current node to nullptr if it's an assignment node and we're outside of a conditional block
+    if (!insideConditional && node && node->type == NODE_ASSIGNMENT &&
+        node->left && // Ensure node->left is not null
         conditionalAssignmentIdentifiers.find(node->left->value) != conditionalAssignmentIdentifiers.end()) {
-        delete node;
         node = nullptr;
-        return;  // Node is deleted, no need to check further
+        return;  // Node is set to nullptr, no need to check further
     }
 
-    // Check if this is an empty sequence node (;) and remove it if necessary
+
+    // Check if this is an empty sequence node (;) and set it to nullptr if necessary
     if (node && node->type == NODE_SEQUENCE && !node->left && !node->right) {
-        delete node;
         node = nullptr;
     }
 }
 
-
 void removeUnnecessarySequenceNodes(ASTNode* &node) {
     if (!node) return;
 
+    // Print the current node before processing
+    std::cout << "Processing Node: " << node->value << " (Type: " << node->type << ")" << std::endl;
+
     // Recursively process the left and right children first
     if (node->left) {
+        std::cout << "Traversing left child of Node: " << node->value << std::endl;
         removeUnnecessarySequenceNodes(node->left);
     }
     if (node->right) {
+        std::cout << "Traversing right child of Node: " << node->value << std::endl;
         removeUnnecessarySequenceNodes(node->right);
     }
 
-    // Check if the current node is a sequence node (;)
+    // Handle sequence nodes
     if (node->type == NODE_SEQUENCE) {
-        if (!node->left && node->right) {
-            // If only the right child exists, replace the sequence node with its right child
+        if (!node->left || !node->right) {
+            // If either child is missing, remove the sequence node and replace it with its existing child
+            std::cout << "Removing sequence node: " << node->value << " (Type: " << node->type << ")" << std::endl;
+            ASTNode* child = node->left ? node->left : node->right;
             ASTNode* temp = node;
-            node = node->right;
+            node = child;
             delete temp;
-        } else if (node->left && !node->right) {
-            // If only the left child exists, replace the sequence node with its left child
-            ASTNode* temp = node;
-            node = node->left;
-            delete temp;
-        } else if (!node->left && !node->right) {
-            // If both children are missing, remove the node entirely
-            delete node;
-            node = nullptr;
         }
+    }
+
+    // Print the state of the node after processing
+    if (node) {
+        std::cout << "Finished processing Node: " << node->value << " (Type: " << node->type << ")" << std::endl;
+    } else {
+        std::cout << "Node was deleted." << std::endl;
     }
 }
 
@@ -801,13 +805,13 @@ int main(int argc, char **argv)
     if(result == 0 && root!=nullptr) {
         // Step 1: Collect identifiers from assignment nodes inside conditionals
         collectConditionalAssignmentIdentifiers(root);
-
+        cout<<"Here at least"<<endl;
         // Step 2: Remove assignment nodes outside conditionals
         removeAssignmentsOutsideConditionals(root);
 
         //this simply removes all unnecessary nodes from the tree
-        removeUnnecessarySequenceNodes(root);
-
+        cout<<"Here though!!!"<<endl;
+        /* removeUnnecessarySequenceNodes(root); */
         std::cout << "AST Root Node Type: " << root->type << std::endl;
         printAST(root);
         generateTASMFile(root,"TestProgramShieldlang");
