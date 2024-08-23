@@ -172,8 +172,41 @@ expression:
             }
 
             if (convertDataTypeToNodeType(assignee.type) == leftNodeType && leftNodeType == rightNodeType) {
-                $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
-                root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+                // Perform constant folding if both operands are numbers
+                if($3->type == NODE_NUMBER && $5->type == NODE_NUMBER){
+                    double operandLeft = std::stod($3->value);
+                    double operandRight = std::stod($5->value);
+                    double result;
+
+                    // Determine the operation
+                    if ($4->value == "+") {
+                        result = operandLeft + operandRight;
+                    } else if ($4->value == "-") {
+                        result = operandLeft - operandRight;
+                    } else if ($4->value == "*") {
+                        result = operandLeft * operandRight;
+                    } else if ($4->value == "/") {
+                        if (operandRight != 0) {
+                            result = operandLeft / operandRight;
+                        } else {
+                            std::cerr << "Error: Division by zero at line " << linenum << std::endl;
+                            result = 0; // Handle division by zero appropriately
+                        }
+                    } else {
+                        std::cerr << "Error: Unknown operator " << $4->value << " at line " << linenum << std::endl;
+                        result = 0; // Handle unknown operator case
+                    }
+
+                    // Create a new node with the constant result
+                    ASTNodePtr resultNode = new ASTNode(NODE_NUMBER, std::to_string(result));
+                    $$ = createAssignmentNode($1, resultNode);
+                    root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+
+                } else {
+                    // Regular assignment without constant folding
+                    $$ = createAssignmentNode($1, createOperatorNode($4->value, $3, $5));
+                    root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+                }
             } else {
                 std::cerr << "Error: Type mismatch in operation or assignment to " << $1 << " at line " << linenum << std::endl;
             }
@@ -221,8 +254,42 @@ expression:
             }
 
             if (convertDataTypeToNodeType($1) == leftNodeType && leftNodeType == rightNodeType) {
-                $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
-                root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+                // Perform constant folding if both operands are numbers
+                if($4->type == NODE_NUMBER && $6->type == NODE_NUMBER){
+                    cout<<"constant folding is happening."<<endl;
+                    double operandLeft = std::stod($4->value);
+                    double operandRight = std::stod($6->value);
+                    double result;
+
+                    // Determine the operation
+                    if ($5->value == "+") {
+                        result = operandLeft + operandRight;
+                    } else if ($5->value == "-") {
+                        result = operandLeft - operandRight;
+                    } else if ($5->value == "*") {
+                        result = operandLeft * operandRight;
+                    } else if ($5->value == "/") {
+                        if (operandRight != 0) {
+                            result = operandLeft / operandRight;
+                        } else {
+                            std::cerr << "Error: Division by zero at line " << linenum << std::endl;
+                            result = 0; // Handle division by zero appropriately
+                        }
+                    } else {
+                        std::cerr << "Error: Unknown operator " << $4->value << " at line " << linenum << std::endl;
+                        result = 0; // Handle unknown operator case
+                    }
+
+                    // Create a new node with the constant result
+                    ASTNodePtr resultNode = new ASTNode(NODE_NUMBER, std::to_string(result));
+                    $$ = createAssignmentNode($2, resultNode);
+                    root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+                }
+                else{
+                    //Create assignment node without constant folding 
+                    $$ = createAssignmentNode($2, createOperatorNode($5->value, $4, $6));
+                    root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
+                }
             } else {
                 std::cerr << "Error: Type mismatch in operation or assignment to " << $2 << " at line " << linenum << std::endl;
             }
@@ -716,7 +783,7 @@ int main(int argc, char **argv)
     // Call yyparse to start parsing the input
     int result = yyparse();
     if(result == 0 && root!=nullptr) {
-        removeNodesInConditionals(root);
+        /* removeNodesInConditionals(root); */
         std::cout << "AST Root Node Type: " << root->type << std::endl;
         printAST(root);
         generateTASMFile(root,"TestProgramShieldlang");

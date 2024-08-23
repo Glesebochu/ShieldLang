@@ -12,13 +12,12 @@ enum NodeType
     NODE_IDENTIFIER,
     NODE_ASSIGNMENT,
     NODE_SEQUENCE,
-    NODE_IF,    // New node type for if statements
-    NODE_ELSE,  // New node type for else statements
-    NODE_ELIF,  // New node type for elif statements
-    NODE_WHILE, // New node type for while loops
-    NODE_FOR,   // New node type for for loops
+    NODE_IF,    
+    NODE_ELSE,  
+    NODE_ELIF,  
+    NODE_WHILE, 
+    NODE_FOR,   
     NODE_UNKNOWN,
-    // ... other types
 };
 
 struct ASTNode
