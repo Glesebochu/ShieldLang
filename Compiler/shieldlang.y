@@ -134,7 +134,7 @@ statement:
     }
     
     | stmt 
-    | INTEGER { 
+    /* | INTEGER { 
           cout << "Integer value: " << $1 << endl; 
       }
     | FLOAT { 
@@ -148,7 +148,7 @@ statement:
       }
     | IDENTIFIER {
         cout << "Identifier detected: " << $1 << endl;
-      }
+      } */
     ;
 
 /* Expression rule with error recovery */
@@ -256,7 +256,7 @@ expression:
             if (convertDataTypeToNodeType($1) == leftNodeType && leftNodeType == rightNodeType) {
                 // Perform constant folding if both operands are numbers
                 if($4->type == NODE_NUMBER && $6->type == NODE_NUMBER){
-                    cout<<"constant folding is happening."<<endl;
+                    cout<<"constant folding is happening at line: "<<linenum<<endl;
                     double operandLeft = std::stod($4->value);
                     double operandRight = std::stod($6->value);
                     double result;
@@ -389,11 +389,11 @@ stmt:
         root = (root == nullptr) ? $$ : createSequenceNode(root, $$);
     }
     | loop_stmt {
-        cout << "Loop statement executed successfully" <<endl;
+        cout << "Loop statement executed successfully at line: " <<linenum<<endl;
       }
     | flow_control
     | function {
-        cout << "Function evaluated" << endl;
+        cout << "Function evaluated at line: " <<linenum<< endl;
     }
     ;
 
