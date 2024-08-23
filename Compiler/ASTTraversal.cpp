@@ -54,6 +54,7 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         return;
 
     int intValue = 0;
+    static std::string lastComparisonOperator; // To store the last comparison operator
 
     switch (node->type)
     {
@@ -70,7 +71,30 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
 
         // Compare the result and jump to elseLabel if the condition is false
         outfile << "CMP AX, BX" << std::endl;
-        outfile << "JNE " << elseLabel << std::endl;
+        if (lastComparisonOperator == "==")
+        {
+            outfile << "JNE " << elseLabel << std::endl;
+        }
+        else if (lastComparisonOperator == "!=")
+        {
+            outfile << "JE " << elseLabel << std::endl;
+        }
+        else if (lastComparisonOperator == "<")
+        {
+            outfile << "JGE " << elseLabel << std::endl;
+        }
+        else if (lastComparisonOperator == ">")
+        {
+            outfile << "JLE " << elseLabel << std::endl;
+        }
+        else if (lastComparisonOperator == "<=")
+        {
+            outfile << "JG " << elseLabel << std::endl;
+        }
+        else if (lastComparisonOperator == ">=")
+        {
+            outfile << "JL " << elseLabel << std::endl;
+        }
 
         // Generate code for the if body
         outfile << ifLabel << ":" << std::endl;
@@ -91,7 +115,6 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
     }
     case NODE_ELSE:
     {
-        // modify this so that it checks if we have already generated
         generateTASM(node->left, outfile);
         break;
     }
@@ -108,24 +131,29 @@ void generateTASM(ASTNode *node, std::ofstream &outfile)
         // Generate comparison code
         if (node->value == "==")
         {
-            outfile << "CMP AX, BX" << std::endl;
+            lastComparisonOperator = node->value;
         }
         else if (node->value == "!=")
         {
-            outfile << "CMP AX, BX" << std::endl;
-            outfile << "JNE "; // To be handled in NODE_IF
+            lastComparisonOperator = node->value;
         }
         else if (node->value == "<")
         {
-            outfile << "CMP AX, BX" << std::endl;
-            outfile << "JL "; // To be handled in NODE_IF
+            lastComparisonOperator = node->value;
         }
         else if (node->value == ">")
         {
-            outfile << "CMP AX, BX" << std::endl;
-            outfile << "JG "; // To be handled in NODE_IF
+            lastComparisonOperator = node->value;
         }
-        //For Arithmetic operators
+        else if (node->value == ">=")
+        {
+            lastComparisonOperator = node->value;
+        }
+        else if (node->value == "<=")
+        {
+            lastComparisonOperator = node->value;
+        }
+        // For Arithmetic operators
         else if (node->value == "+")
         {
             outfile << "ADD AX, BX" << std::endl;
