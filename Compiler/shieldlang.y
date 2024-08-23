@@ -6,6 +6,7 @@
 #include "ASTNode.h" //Include the AstNode.h
 #include "SymbolTable.h" // Include the symbol table
 #include "ASTTraversal.h"
+#include <unordered_set>
 using namespace std;
 
 // Declare stuff from Flex that Bison needs to know about
@@ -23,8 +24,8 @@ ASTNodePtr createAssignmentNode(const std::string &identifier, ASTNodePtr right)
 ASTNodePtr createOperatorNode(const std::string &op, ASTNodePtr left, ASTNodePtr right);
 ASTNodePtr createSequenceNode(ASTNodePtr first, ASTNodePtr second);
 NodeType convertDataTypeToNodeType(DataType dataType);
-void removeNodesFromSequence(ASTNode* node);
-void removeNodesInConditionals(ASTNode* node);
+std::unordered_set<std::string> conditionalAssignmentIdentifiers;
+void removeUnnecessarySequenceNodes(ASTNode* &node);
 %}
 
 // Define YYSTYPE to include different types
@@ -688,71 +689,86 @@ NodeType convertDataTypeToNodeType(DataType dataType) {
             return NODE_UNKNOWN; // You can define NODE_UNKNOWN in your `ASTNode.h` or handle this case appropriately
     }
 }
-void removeNodesInConditionals(ASTNode* node) {
+
+void collectConditionalAssignmentIdentifiers(ASTNode* node, bool insideConditional = false) {
     if (!node) return;
 
-    std::cout << "Processing node: " << node->value << " (Type: " << node->type << ")" << std::endl;
+    // Check if we are entering a conditional block
+    if (node->type == NODE_IF || node->type == NODE_ELIF || node->type == NODE_ELSE) {
+        insideConditional = true;
+    }
 
-    // If the node is an IF, ELIF, or ELSE statement, we handle its body separately
-    if (node->type == NODE_IF || node->type == NODE_ELIF) {
-        std::cout << "Found IF/ELIF node: " << node->value << ". Processing its body..." << std::endl;
-        if (node->right) {
-            removeNodesFromSequence(node->right);
-        }
-    } else if (node->type == NODE_ELSE) {
-        std::cout << "Found ELSE node: " << node->value << ". Handling special case..." << std::endl;
-        if (node->parent->parent) {
-            ASTNode* leftSibling = node->parent->parent->left;
-            if (leftSibling && leftSibling->right) {
-                std::cout << "Removing left sibling's right child of ELSE node: " << leftSibling->right->left->value << std::endl;
-                removeNodesFromSequence(leftSibling->right);
-            }
-        }
-        // Remove the ELSE's own body as well
-        if (node->right) {
-            std::cout << "Removing ELSE node's body: " << node->right->value << std::endl;
-            removeNodesFromSequence(node->right);
-        }
-    } else {
-        std::cout << "Recursively checking children of node: " << node->value << std::endl;
-        // Recursively check left and right children
-        removeNodesInConditionals(node->left);
-        removeNodesInConditionals(node->right);
+    // Only collect identifiers if we're inside a conditional block
+    if (insideConditional && node->type == NODE_ASSIGNMENT && node->left && node->left->type == NODE_IDENTIFIER) {
+        conditionalAssignmentIdentifiers.insert(node->left->value);
+    }
+
+    // Recursively collect from the left and right children
+    collectConditionalAssignmentIdentifiers(node->left, insideConditional);
+    collectConditionalAssignmentIdentifiers(node->right, insideConditional);
+}
+
+void removeAssignmentsOutsideConditionals(ASTNode* &node, bool insideConditional = false) {
+    if (!node) return;
+
+    // Determine if we are entering a new conditional block
+    if (node->type == NODE_IF || node->type == NODE_ELIF || node->type == NODE_ELSE) {
+        insideConditional = true;
+    }
+
+    // Traverse the left child first
+    if (node->left) {
+        removeAssignmentsOutsideConditionals(node->left, insideConditional);
+    }
+
+    // Traverse the right child
+    if (node->right) {
+        removeAssignmentsOutsideConditionals(node->right, insideConditional);
+    }
+
+    // Delete the current node if it's an assignment node and we're outside of a conditional block
+    if (!insideConditional && node->type == NODE_ASSIGNMENT &&
+        conditionalAssignmentIdentifiers.find(node->left->value) != conditionalAssignmentIdentifiers.end()) {
+        delete node;
+        node = nullptr;
+        return;  // Node is deleted, no need to check further
+    }
+
+    // Check if this is an empty sequence node (;) and remove it if necessary
+    if (node && node->type == NODE_SEQUENCE && !node->left && !node->right) {
+        delete node;
+        node = nullptr;
     }
 }
 
-void removeNodesFromSequence(ASTNode* node) {
+
+void removeUnnecessarySequenceNodes(ASTNode* &node) {
     if (!node) return;
 
-    std::cout << "Removing node from sequence: " << node->value << " (Type: " << node->type << ")" << std::endl;
-
-    // Assuming that each node in the sequence has a parent pointer set
-    if (node->parent) {
-        if (node->parent->left == node) {
-            std::cout << "Removing node from parent's left: " << node->value << std::endl;
-            node->parent->left = nullptr;
-        } else if (node->parent->right == node) {
-            std::cout << "Removing node from parent's right: " << node->value << std::endl;
-            node->parent->right = nullptr;
-        }
+    // Recursively process the left and right children first
+    if (node->left) {
+        removeUnnecessarySequenceNodes(node->left);
+    }
+    if (node->right) {
+        removeUnnecessarySequenceNodes(node->right);
     }
 
-    // Continue to remove nodes from left and right branches
-    removeNodesFromSequence(node->left);
-    removeNodesFromSequence(node->right);
-
-    // If this node is part of a sequence, ensure to handle the sequence correctly
+    // Check if the current node is a sequence node (;)
     if (node->type == NODE_SEQUENCE) {
-        std::cout << "Handling sequence node: " << node->value << std::endl;
-        if (node->left) {
-            node->parent->left = node->left;
-            node->left->parent = node->parent;
-            std::cout << "Reassigned parent's left to: " << node->left->value << std::endl;
-        }
-        if (node->right) {
-            node->parent->right = node->right;
-            node->right->parent = node->parent;
-            std::cout << "Reassigned parent's right to: " << node->right->value << std::endl;
+        if (!node->left && node->right) {
+            // If only the right child exists, replace the sequence node with its right child
+            ASTNode* temp = node;
+            node = node->right;
+            delete temp;
+        } else if (node->left && !node->right) {
+            // If only the left child exists, replace the sequence node with its left child
+            ASTNode* temp = node;
+            node = node->left;
+            delete temp;
+        } else if (!node->left && !node->right) {
+            // If both children are missing, remove the node entirely
+            delete node;
+            node = nullptr;
         }
     }
 }
@@ -783,7 +799,15 @@ int main(int argc, char **argv)
     // Call yyparse to start parsing the input
     int result = yyparse();
     if(result == 0 && root!=nullptr) {
-        /* removeNodesInConditionals(root); */
+        // Step 1: Collect identifiers from assignment nodes inside conditionals
+        collectConditionalAssignmentIdentifiers(root);
+
+        // Step 2: Remove assignment nodes outside conditionals
+        removeAssignmentsOutsideConditionals(root);
+
+        //this simply removes all unnecessary nodes from the tree
+        removeUnnecessarySequenceNodes(root);
+
         std::cout << "AST Root Node Type: " << root->type << std::endl;
         printAST(root);
         generateTASMFile(root,"TestProgramShieldlang");

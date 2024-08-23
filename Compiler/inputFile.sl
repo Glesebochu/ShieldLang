@@ -1,30 +1,32 @@
-17.45223
+/* 17.45223
 123
 "tester"
 "a"
 _i
+*/
 verbum myName="SomeStupidName";
 novem _num1=5;
-"number123"
+"number123";
 decem _num2=9.3*5;
 decem _num3=20/3.3;
 novem _num4=8;
 novem num7=9*3;
 decem num3PlusNum2 = _num3 + _num2;
+decem num7DivNum3= num7 / _num3;
 verbum AnotherName = "Did it actually work now???";
 novem testNumber = 300/5;
 
 /* Testing multiline comments
 will it stop*/
 //Defining a simple if statement
-novem _a=5;
+novem _a=4;
 kehone(_a==4){
-    novem _num5=60+410;
-     verbum FirstName="Finhas";
-     
+     verbum IfBlock="Executed";  
 }
 kalhone{
-    verbum TestName="Unknown";
+    decem num1=2;
+    novem num200=5;
+    verbum ElseBlock="Executed with num1 and num200";
 }
 
 //Defining an if elif else statement
@@ -39,7 +41,7 @@ lelakehone(6==7){
 kalhone { 
     Test = "Failed";
 }
-*/
+
 
 //Defining a function
 sira minem TestFunc(decem float1, verbum string1, duo False){
